@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+# see https://theoptionlab.com/research/bull.html 
+
 import collections
 from util import util
 from util import sql_connector

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+
+# see https://theoptionlab.com/research/netzero.html 
+
 from util import util 
 from util import sql_connector
 import collections
-
 
 
 parameters = collections.OrderedDict()

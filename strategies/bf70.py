@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+# see https://theoptionlab.com/research/bf70.html
+
 from util import util
 from util import sql_connector
 from util import expected_value
