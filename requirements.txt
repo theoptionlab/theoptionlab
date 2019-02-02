@@ -1,0 +1,7 @@
+pandas==0.23.4
+py_vollib==1.0.1
+SQLAlchemy==1.2.14
+numpy==1.15.4
+PyGreSQL==5.0.6
+pgdb==0.0.5
+util==0.0.1
