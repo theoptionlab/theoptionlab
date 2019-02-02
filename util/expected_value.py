@@ -1,21 +1,20 @@
-from util import sql_connector
-import util  
+from util import util 
 import math
 from datetime import datetime, time
 import py_lets_be_rational.exceptions as pyex
 from py_vollib import black_scholes
 from py_vollib.black_scholes import implied_volatility
 
+
 e_spanne = 3
 ratio = 100
 
 
+def getExpectedValue(connector, underlying, combo, current_date, expiration): 
 
-def getExpectedValue(underlying, combo, current_date, expiration): 
-
-    current_quote = sql_connector.query_midprice_underlying(underlying, current_date)
+    current_quote = connector.query_midprice_underlying(underlying, current_date)
     
-    expiration_time = datetime.combine(expiration, time(16, 00))
+    expiration_time = datetime.combine(expiration, time(16))
     remaining_time_in_years = util.remaining_time(current_date, expiration_time)
     
     ul_for_ew = []
@@ -28,10 +27,10 @@ def getExpectedValue(underlying, combo, current_date, expiration):
         atm_strike = int((current_quote + 10) / 10) * 10
     
     try:
-        atm_option = util.Option(current_date, underlying, atm_strike, expiration, "p")
+        atm_option = util.Option(connector, current_date, underlying, atm_strike, expiration, "p")
     except ValueError: 
         return "missing data"
-    midprice = sql_connector.query_midprice(current_date, atm_option)
+    midprice = connector.query_midprice(current_date, atm_option)
     
         
 
@@ -79,8 +78,11 @@ def getExpectedValue(underlying, combo, current_date, expiration):
 
 def getExpectedValueGroup(underlying, group, current_date, expiration): 
     expected_value = 0
-    combos = group.getButterflies()
+    combos = group.getCombos()
     for combo in combos: 
         expected_value += getExpectedValue(underlying, combo, current_date, expiration)
     return expected_value
+
+
+# idea: Cauchy distribution or real history 
 

@@ -18,8 +18,19 @@ import math
 def sharpe_ratio(er, returns, rf):
     return (er - rf) / np.std(returns)
 
+def annualized_sharpe_ratio(er, returns, rf): 
+    sr = sharpe_ratio(er, returns, rf)
+    annualized_sharpe_ratio = round((np.sqrt(252) * sr),2)
+    return annualized_sharpe_ratio
+
+
 def sortino_ratio(er, returns, rf, target=0):
     return (er - rf) / math.sqrt(lpm(returns, target, 2))
+
+def annualized_sortino_ratio(er, returns, rf, target=0):
+    sortino_ratio = sortino_ratio(er, returns, rf, target=0) 
+    annualized_sortino_ratio = round((np.sqrt(252) * sortino_ratio),2)
+    return annualized_sortino_ratio
 
 
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sql_connector
 import calendar
 import math
 import scipy.stats as st
@@ -9,6 +8,7 @@ from pandas.tseries.offsets import BMonthEnd
 from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
 from datetime import datetime, time, timedelta
 from py_vollib import black_scholes
+
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
@@ -38,8 +38,9 @@ holidays = cal1.holidays(start=dr.min(), end=dr.max()).date
 
 class Strategy(object): 
     
-    def __init__(self, name, underlying, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit):
+    def __init__(self, connector, name, underlying, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
         
+        self.connector = connector 
         self.name = name 
         self.underlying = underlying 
         self.patient_days_before = patient_days_before 
@@ -58,8 +59,9 @@ class Strategy(object):
         self.deltatheta_exit = deltatheta_exit
         self.tp_exit = tp_exit
         self.sl_exit = sl_exit
+        self.delta = delta
 
-    def setParameters(self, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit):
+    def setParameters(self, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
         
         self.cheap_entry = cheap_entry 
         self.down_day_entry = down_day_entry
@@ -75,6 +77,7 @@ class Strategy(object):
         self.deltatheta_exit = deltatheta_exit
         self.tp_exit = tp_exit
         self.sl_exit = sl_exit
+        self.delta = delta
         
 
     def checkEntry(self, current_date):
@@ -92,9 +95,10 @@ class Strategy(object):
       
 class Option():
 
-    def __init__(self, entry_date, underlying, strike, expiration, sort):
+    def __init__(self, connector, entry_date, underlying, strike, expiration, sort):
         
-        result = sql_connector.check_option(underlying, strike, entry_date, expiration)
+        result = connector.check_option(underlying, strike, entry_date, expiration) 
+            
         if not (result == 1): 
             raise ValueError('Option not in DB')
         
@@ -149,6 +153,19 @@ class PutButterfly(Combo):
         positions.append(self.lowerlongposition)
         return positions 
 
+
+class PutCreditSpread(Combo):
+    
+    def __init__(self, shortposition, longposition):
+        self.shortposition = shortposition
+        self.longposition = longposition
+        
+    def getPositions(self):
+        positions = [] 
+        positions.append(self.shortposition)
+        positions.append(self.longposition)
+        return positions  
+    
     
 class IronButterfly(Combo):
     
@@ -166,7 +183,23 @@ class IronButterfly(Combo):
         positions.append(self.longputposition)
         return positions 
 
+class Condor(Combo):
+    
+    def __init__(self, pcs_longposition, pcs_shortposition, pds_shortposition, pds_longposition):
+        self.pcs_longposition = pcs_longposition
+        self.pcs_shortposition = pcs_shortposition
+        self.pds_shortposition = pds_shortposition
+        self.pds_longposition = pds_longposition
         
+    def getPositions(self):
+        positions = [] 
+        positions.append(self.pcs_longposition)
+        positions.append(self.pcs_shortposition)
+        positions.append(self.pds_shortposition)
+        positions.append(self.pds_longposition)
+        return positions  
+    
+    
 class BWB(PutButterfly):
     
     def __init__(self, upperlongposition, rolledlongposition, cs_shortposition, lowerlongposition):
@@ -198,9 +231,6 @@ class Group(object):
 
 
 
-
-
-
 # probability that the price hits a barrier before expiry
 # auch in makro 
 def prob_hit(s, x, t, r, sd): 
@@ -223,7 +253,7 @@ def remaining_time(reference, expiration):
     if reference == None: 
         ref = datetime.now()
     else: 
-        ref = datetime.combine(reference, time(15, 00))
+        ref = datetime.combine(reference, time(15))
             
     ref_excel = excel_date(ref)
     ref_date = datetime(ref.year, ref.month, ref.day)
@@ -242,55 +272,63 @@ def remaining_time(reference, expiration):
     return remaining_time_in_years
     
 
-def makePosition(current_date, underlying, strike, expiration, optiontype, position_size):
-    try: option = Option(current_date, underlying, strike, expiration, optiontype)
+def makePosition(connector, current_date, underlying, strike, expiration, optiontype, position_size):
+    try: option = Option(connector, current_date, underlying, strike, expiration, optiontype)
     except ValueError: 
         return None 
-    midprice = sql_connector.query_midprice(current_date, option, False)   
+    midprice = connector.query_midprice(current_date, option)
     position = Position(option, midprice, position_size)
     return position 
 
 
 
-def getCurrentPnLPosition(position, current_date):
-    entry_price = (position.entry_price * position.amount)
-    current_commissions = commissions * (abs(position.amount) * 2)  # rein und raus 
-    midprice = sql_connector.query_midprice(current_date, position.option, False)
+def getCurrentPnLPosition(connector, position, current_date):
     
-    if midprice == None: 
-#         print "midprice is None"
-        return None 
+    current_commissions = commissions * (abs(position.amount) * 2) # buy and sell
+    midprice = None 
+    
+    # if option is expired, compute theoretical midprice 
+    if current_date >= position.option.expiration:
+        current_date = position.option.expiration 
+        midprice = bs_option_price(connector, position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
+        current_commissions = commissions * (abs(position.amount)) # expired, only commissoins for entry
+    
+    while midprice is None: 
+
+        midprice = connector.query_midprice(current_date, position.option)
+        
+        if midprice is None: 
+            current_date = current_date - timedelta(1)
+            continue 
+
+
     current_price = (midprice * position.amount)
+    entry_price = (position.entry_price * position.amount)
     currentpnl = ((current_price - entry_price) * ratio) - current_commissions
     return currentpnl
 
 
-def getCurrentPnL(combo, current_date):
+def getCurrentPnL(connector, combo, current_date):
     currentpnl = 0       
     positions = combo.getPositions()
     for position in positions: 
         if position is not None: 
-            positionPnL = getCurrentPnLPosition(position, current_date)
-            if positionPnL is None: 
-#                 print position.option.strike 
-#                 print position.option.expiration 
-#                 print current_date 
-#                 print "positionPnL is None"
-                return None 
+            positionPnL = getCurrentPnLPosition(connector, position, current_date)
+            if positionPnL is None: return None 
             currentpnl += positionPnL
     return currentpnl
 
 
-def getCurrentPnLGroup(group, current_date):
+def getCurrentPnLGroup(connector, group, current_date):
     current_pnl = 0
     combos = group.getCombos()
     for combo in combos: 
         if combo is None: 
-            print "combo is None"
-        combo_pnl = getCurrentPnL(combo, current_date) 
+            print("combo is None")
+        combo_pnl = getCurrentPnL(connector, combo, current_date) 
         if combo_pnl is not None: 
             current_pnl += combo_pnl
-        else: print "combo_pnl is None"
+        else: print("combo_pnl is None")
     return current_pnl
 
 
@@ -303,47 +341,81 @@ def getEntryPrice(combo):
     return entry_price
 
 
-def getDelta(combo, current_date, expiration, underlying):
+def getDelta(connector, combo, current_date):
 
     delta_sum = 0 
     
     positions = combo.getPositions()
     for position in positions: 
-        
-        
-        delta = sql_connector.select_delta(current_date, underlying, expiration, position.option.type, position.option.strike) * position.amount        
-        delta_sum += delta 
+        if position is not None: 
+            delta = connector.select_delta(current_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike) 
+            if delta is not None: 
+                delta_sum += delta * position.amount
     
     return delta_sum
 
 
-def getDeltaGroup(underlying, group, current_date, expiration):
+def getDeltaGroup(connector, group, current_date):
 
     delta_sum = 0 
 
-    for combo in group.getButterflies(): 
-        delta_sum += getDelta(combo, current_date, expiration, underlying) 
+    for combo in group.getCombos(): 
+        delta_sum += getDelta(connector, combo, current_date) 
         
     return delta_sum
 
 
-def getTheta(combo, current_date, expiration, underlying):
+def getVega(connector, combo, current_date):
+
+    vega_sum = 0 
+    
+    positions = combo.getPositions()
+    for position in positions: 
+        if position is not None: 
+            vega = connector.select_vega(current_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)       
+            if vega is not None: 
+                vega_sum += vega * position.amount 
+    
+    return vega_sum 
+
+
+def getVegaGroup(connector, group, current_date):
+
+    vega_sum = 0 
+
+    for combo in group.getCombos(): 
+        vega_sum += getVega(connector, combo, current_date) 
+        
+    return vega_sum 
+
+def getThetaGroup(connector, group, current_date):
+
+    theta_sum = 0 
+
+    for combo in group.getCombos(): 
+        theta_sum += getTheta(connector, combo, current_date) 
+        
+    return theta_sum  
+
+
+def getTheta(connector, combo, current_date):
     
     theta_sum = 0 
     
     positions = combo.getPositions()
     for position in positions: 
-        
-        theta = sql_connector.select_theta(current_date, position.option) * position.amount
-        theta_sum += (theta) 
+        if position is not None: 
+            theta = connector.select_theta(current_date, position.option)
+            if theta is not None: 
+                theta_sum += (theta) * position.amount
     
     return theta_sum          
                 
                 
-def getDeltaTheta(underlying, combo, current_date, expiration):
+def getDeltaTheta(connector, underlying, combo, current_date, expiration):
     
-    delta_sum = getDelta(combo, current_date, expiration, underlying) 
-    theta_sum = getTheta(combo, current_date, expiration, underlying) 
+    delta_sum = getDelta(connector, combo, current_date, expiration, underlying) 
+    theta_sum = getTheta(connector, combo, current_date, expiration, underlying) 
 
     deltatheta = abs(delta_sum) / abs(theta_sum)
     return deltatheta
@@ -354,7 +426,7 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
     delta_sum = 0 
     theta_sum = 0
     
-    combos = group.getButterflies()
+    combos = group.getCombos()
     for combo in combos: 
         
         delta_sum += getDelta(combo, current_date, expiration, underlying) 
@@ -409,7 +481,7 @@ def getExpirationGroup(group):
     lower_expiration_line = 0
     upper_expiration_line = 0 
     
-    butterflies = group.getButterflies()
+    butterflies = group.getCombos()
     
     for combo in butterflies: 
         
@@ -420,7 +492,7 @@ def getExpirationGroup(group):
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
 
 
-def getDownDay(underlying, date, strategy):
+def getDownDay(connector, underlying, date, strategy):
     
     down_definition = 0
     if strategy == "short_term_parking": 
@@ -429,20 +501,20 @@ def getDownDay(underlying, date, strategy):
     down_day = False 
         
     previous_date = date - timedelta(days=1)
-    while (sql_connector.check_holiday(underlying, previous_date) == True): 
+    while (connector.check_holiday(underlying, previous_date) == True): 
         previous_date = previous_date - timedelta(days=1)
                 
-    underlying_midprice_current = sql_connector.query_midprice_underlying(underlying, date)
-    underlying_midprice_previous = sql_connector.query_midprice_underlying(underlying, previous_date)
+    underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
+    underlying_midprice_previous = connector.query_midprice_underlying(underlying, previous_date)
     percentage_move = ((underlying_midprice_current - underlying_midprice_previous) / underlying_midprice_previous) * 100
         
     if percentage_move < down_definition: down_day = True
     
     return down_day
 
-def selectStrikeByPrice(price, underlying, date, expiration, option_type, divisor):
+def selectStrikeByPrice(connector, price, underlying, date, expiration, option_type, divisor):
     
-    results = sql_connector.select_strikes_midprice(underlying, date, expiration, option_type, divisor)  
+    results = connector.select_strikes_midprice(underlying, date, expiration, option_type, divisor)  
     
     closest_strike = None 
     
@@ -452,7 +524,7 @@ def selectStrikeByPrice(price, underlying, date, expiration, option_type, diviso
     for row in results: 
         strike = row[0]
      
-        midprice  = float((row[1] + row[2]) / 2)
+        midprice  = float(row[1])
         distance = abs(price - midprice)
         
          
@@ -467,3 +539,36 @@ def selectStrikeByPrice(price, underlying, date, expiration, option_type, diviso
 
 def myround(x, base=25):
     return int(base * round(float(x)/base))
+
+
+def testPCS(connector, short_strike, current_date, underlying, expiration, position_size, width): 
+
+    shortposition = makePosition(connector, current_date, underlying, short_strike, expiration, "p", -position_size)
+    longstrike = (short_strike - width)
+    longposition = makePosition(connector, current_date, underlying, longstrike, expiration, "p", position_size)
+
+    if shortposition is None or longposition is None: 
+        return None 
+    pcs = PutCreditSpread(shortposition,longposition)
+    return pcs
+
+
+def bs_option_price(connector, underlying, expiration, option_type, strike, current_date): 
+    
+    price = None 
+    
+    while price is None: 
+    
+        current_quote = connector.query_midprice_underlying(underlying, current_date)
+        if current_quote is None: 
+            current_date = current_date - timedelta(1) 
+            continue 
+    
+        expiration_time = datetime.combine(expiration, time(16))
+        remaining_time_in_years = remaining_time(current_date, expiration_time)
+        
+        price = black_scholes.black_scholes(option_type, current_quote, strike, remaining_time_in_years, interest, 0.151)
+    
+    return float(price)
+
+    

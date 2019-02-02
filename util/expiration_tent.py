@@ -40,7 +40,7 @@ def getLowerBreakpointGroup(group, current_date, expiration):
         
         sum_guv = 0
         
-        combos = group.getButterflies() 
+        combos = group.getCombos() 
         for combo in combos: 
             positions = combo.getPositions()
             for position in positions:   
