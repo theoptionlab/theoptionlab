@@ -9,7 +9,6 @@
 5) database and tables with script in create_db_postresql.sql
 $ psql -h host -d optiondata -U user -f /path/to/create_db_postresql.sql
 
-
 6) adapt private/settings_template.py with your own settings and rename the file into settings.py
 
 7) try to run insert_fullday.py and then free_money_scanner.py 
