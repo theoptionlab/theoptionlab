@@ -3,58 +3,57 @@
 # see https://theoptionlab.com/research/bf70.html
 
 from util import util
-from util import sql_connector
 from util import expected_value
 import collections
 
 
 parameters = collections.OrderedDict()
-parameters["cheap_entry"] = [None]
-parameters["down_day_entry"] = [False]
-parameters["patient_entry"] = [False]
+parameters["cheap_entry"] = [None, 1.1]
+parameters["down_day_entry"] = [True, False]
+parameters["patient_entry"] = [True, False]
 parameters["min_vix_entry"] = [None]
 parameters["max_vix_entry"] = [None]
 parameters["dte_entry"] = [70]
 parameters["els_entry"] = [None]
-parameters["ew_exit"] = [False]
+parameters["ew_exit"] = [True, False]
 parameters["pct_exit"] = [None]
 parameters["dte_exit"] = [7]
 parameters["dit_exit"] = [None]
 parameters["deltatheta_exit"] = [None]
 parameters["tp_exit"] = [None]
 parameters["sl_exit"] = [None] 
-
+parameters["delta"] = [None]
 
 
 class bf70(util.Strategy):
     
     def makeCombo(self, current_date, expiration, position_size):
 
-        current_quote = sql_connector.query_midprice_underlying(self.underlying, current_date)
+        current_quote = self.connector.query_midprice_underlying(self.underlying, current_date)
         upperlongstrike = int(round(current_quote, -1))
 
-        # Obere long Puts am Geld 
-        upperlongposition = util.makePosition(current_date, self.underlying, upperlongstrike, expiration, "p", position_size)
+        # upper long puts at the money 
+        upperlongposition = util.makePosition(self.connector, current_date, self.underlying, upperlongstrike, expiration, "p", position_size)
         if upperlongposition is None: return None 
-        # Short Puts 30 Punkte drunter 
+        
+        # short puts 30 points below 
         shortstrike = int(upperlongstrike - 30)
-        shortposition = util.makePosition(current_date, self.underlying, shortstrike, expiration, "p", -2 * position_size)
+        shortposition = util.makePosition(self.connector, current_date, self.underlying, shortstrike, expiration, "p", -2 * position_size)
         if shortposition is None: return None 
         
-        # Untere long Puts 40 Punkte unter Short Puts 
+        # lower long puts 40 points below short puts
         lowerlongstrike = int(upperlongstrike - 70)
-        lowerlongposition = util.makePosition(current_date, self.underlying, lowerlongstrike, expiration, "p", position_size)
+        lowerlongposition = util.makePosition(self.connector, current_date, self.underlying, lowerlongstrike, expiration, "p", position_size)
         if lowerlongposition is None: return None 
         
         combo = util.BWB(upperlongposition, None, shortposition, lowerlongposition)
-            
         return combo
 
 
     def checkEntry(self, current_date):
 
         if (self.down_day_entry): 
-            down_day = util.getDownDay(self.underlying, current_date, self.name)
+            down_day = util.getDownDay(self.connector, self.underlying, current_date, self.name)
             if (not down_day): 
                 return False 
                 
@@ -63,7 +62,7 @@ class bf70(util.Strategy):
     
     def checkCombo(self, combo):
         
-        # Preis checken
+        # check entry price 
         if self.cheap_entry is not None: 
             entry_price = util.getEntryPrice(combo) 
             if (entry_price > (self.cheap_entry)): 
@@ -74,9 +73,9 @@ class bf70(util.Strategy):
     
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
 
-        underlying_midprice = sql_connector.query_midprice_underlying(self.underlying, current_date)
+        underlying_midprice = self.connector.query_midprice_underlying(self.underlying, current_date)
     
-        # 1) TP Ziel erreicht: 1,000 > 35 DTE, 800 > 28 DTE, 600 > 21 DTE, 400
+        # 1) TP: 1,000 > 35 DTE, 800 > 28 DTE, 600 > 21 DTE, 400
         tp = 200  
         if dte <= 35: tp = 160  
         if dte <= 28: tp = 120  
@@ -86,21 +85,21 @@ class bf70(util.Strategy):
         if current_pnl >= tp: 
             return "tp"
     
-        # 2) RUT 10 Punkte unter den Short Strikes 
+        # 2) RUT 10 points below the short strikes
         if underlying_midprice < combo.shortposition.option.strike - 10: 
             return "le"
     
-        # 3) Restlaufzeit ist < 40 DTE und RUT ist 60 Punkte über den Short Strikes 
+        # 3) remaining time is < 40 DTE and RUT is 60 points above the short strike 
         if ((dte < 40) and (underlying_midprice > combo.shortposition.option.strike + 60)): 
             return "ue"
             
-        # 4) Restlaufzeit < dte_exit
+        # 4) remaining time < dte_exit
         if dte < self.dte_exit: 
             return "dte"
         
-        # 5) Erwartungswert < aktueller Wert 
+        # 5) expected value < current value 
         if self.ew_exit == True: 
-            ew = expected_value.getExpectedValue(self.underlying, combo, current_date, expiration)
+            ew = expected_value.getExpectedValue(self.connector, self.underlying, combo, current_date, expiration)
             if ew <= current_pnl:
                 return "ew"
             

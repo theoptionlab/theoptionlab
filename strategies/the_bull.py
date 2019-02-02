@@ -4,7 +4,6 @@
 
 import collections
 from util import util
-from util import sql_connector
 
 
 parameters = collections.OrderedDict()
@@ -22,49 +21,31 @@ parameters["dit_exit"] = [None]
 parameters["deltatheta_exit"] = [None]
 parameters["tp_exit"] = [50,80, None]
 parameters["sl_exit"] = [200,400,None]
-
-
-def testCombo(closest_strike, current_date, underlying, expiration, position_size): 
-
-    shortposition = util.makePosition(current_date, underlying, closest_strike, expiration, "p", -position_size)
-    
-    longstrike = (closest_strike - 30)
-    longposition = util.makePosition(current_date, underlying, longstrike, expiration, "p", position_size)
-
-    if shortposition is None or longposition is None: return None 
-        
-    positions = [shortposition, longposition]
-    combo = util.Combo(positions)
-    return combo
-
+parameters["delta"] = [None]
 
 class bull(util.Strategy): 
     
 
     def makeCombo(self, current_date, expiration, position_size):
     
-        closest_strike = sql_connector.select_strike_by_delta(current_date, self.underlying, expiration, "p", -10)
+        closest_strike = self.connector.select_strike_by_delta(current_date, self.underlying, expiration, "p", -10, 25)
         entry_price = 0 
         
         while (entry_price > -2.5): 
-            
-            closest_strike += 5 
+            closest_strike += 25
+            pcs = util.testPCS(self.connector, closest_strike, current_date, self.underlying, expiration, position_size, 30)
+            if pcs is None: continue 
+            else: entry_price = util.getEntryPrice(pcs) 
     
-            combo = testCombo(closest_strike, current_date, self.underlying, expiration, position_size)
-            if combo is None: continue 
-            else: entry_price = util.getEntryPrice(combo) 
-    
-        return combo 
-
+        return pcs 
 
     
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
         
-
         if dte < self.dte_exit: 
             return "dte"
     
-        # Stop Loss: x% der eingenommenen Prämie 
+        # Stop Loss: x% of the credit received 
         if (self.sl_exit is not None):
             sl = (entry_price * self.sl_exit)
             if current_pnl <= sl:
@@ -75,6 +56,5 @@ class bull(util.Strategy):
             tp = (-entry_price * self.tp_exit)
             if current_pnl >= tp:
                 return "tp"
-
         
         return None 
