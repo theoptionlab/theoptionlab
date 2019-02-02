@@ -1,10 +1,14 @@
-1) Data. We use EOD data from the CBOE 
+1) Data. We use EOD data from the CBOE. 
 
-2) Python. We use version 2.7 and recommend Annaconda: https://www.anaconda.com/ 
-3) Installed dependencies: pip install -r requirements.txt 
+2) Python. We use version 3. 
+
+3) Install dependencies: pip install -r requirements.txt 
 
 4) mysql: https://www.mysql.com/
-5) database and tables with script in create_db.sql
+
+5) database and tables with script in create_db_postresql.sql
+$ psql -h host -d optiondata -U user -f /path/to/create_db_postresql.sql
+
 
 6) adapt private/settings_template.py with your own settings and rename the file into settings.py
 
