@@ -119,4 +119,4 @@ def fly(strategy, risk_capital, entrydate, expiration):
         if exit_criterion != None:
             return {'exit': exit_criterion, 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price/position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
             
- 
+

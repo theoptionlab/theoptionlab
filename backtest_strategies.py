@@ -12,12 +12,12 @@ import collections
 
 def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters): 
     
-    if printalot: print "strategy_name_extra: " + str(strategy_flavor)
-    if printalot: print "risk_capital: " + str(risk_capital)
-    if printalot: print "underlying: " + str(strategy.underlying)
-    if printalot: print "start: " + str(start)
-    if printalot: print "end: " + str(end)
-    if printalot: print
+    if printalot: print("strategy_name_extra: " + str(strategy_flavor))
+    if printalot: print("risk_capital: " + str(risk_capital))
+    if printalot: print("underlying: " + str(strategy.underlying))
+    if printalot: print("start: " + str(start))
+    if printalot: print("end: " + str(end))
+    if printalot: print()
     
     
     s = []
@@ -26,8 +26,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             s.append(parameter)
         else: s.append(None) 
 
-    if printalot: print "number of combinations: " + str(len(list(itertools.product(*s))))
-    if printalot: print 
+    if printalot: print("number of combinations: " + str(len(list(itertools.product(*s)))))
+    if printalot: print()
 
 
     trade_log = collections.OrderedDict()
@@ -54,23 +54,25 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         deltatheta_exit = combination[11]
         tp_exit = combination[12]
         sl_exit = combination[13]
+        delta = combination[14]
 
 
-        if printalot: print "cheap_entry: " + str(cheap_entry)
-        if printalot: print "down_day_entry: " + str(down_day_entry)
-        if printalot: print "patient_entry: " + str(patient_entry)
-        if printalot: print "min_vix_entry: " + str(min_vix_entry)
-        if printalot: print "max_vix_entry: " + str(max_vix_entry)
-        if printalot: print "dte_entry: " + str(dte_entry)
-        if printalot: print "els_entry: " + str(els_entry) 
-        if printalot: print "ew_exit: " + str(ew_exit)
-        if printalot: print "pct_exit: " + str(pct_exit)
-        if printalot: print "dte_exit: " + str(dte_exit)
-        if printalot: print "dit_exit: " + str(dit_exit)
-        if printalot: print "deltatheta_exit: " + str(deltatheta_exit)
-        if printalot: print "tp_exit: " + str(tp_exit) 
-        if printalot: print "sl_exit: " + str(sl_exit)
-        if printalot: print 
+        if printalot: print("cheap_entry: " + str(cheap_entry))
+        if printalot: print("down_day_entry: " + str(down_day_entry))
+        if printalot: print("patient_entry: " + str(patient_entry))
+        if printalot: print("min_vix_entry: " + str(min_vix_entry))
+        if printalot: print("max_vix_entry: " + str(max_vix_entry))
+        if printalot: print("dte_entry: " + str(dte_entry))
+        if printalot: print("els_entry: " + str(els_entry))
+        if printalot: print("ew_exit: " + str(ew_exit))
+        if printalot: print("pct_exit: " + str(pct_exit))
+        if printalot: print("dte_exit: " + str(dte_exit))
+        if printalot: print("dit_exit: " + str(dit_exit))
+        if printalot: print("deltatheta_exit: " + str(deltatheta_exit))
+        if printalot: print("tp_exit: " + str(tp_exit))
+        if printalot: print("sl_exit: " + str(sl_exit))
+        if printalot: print("delta: " + str(delta))
+        if printalot: print()
     
     
         strategy_code = "" 
@@ -89,6 +91,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         if (len(parameters["deltatheta_exit"]) > 1): strategy_code += "_DTR_" + str(deltatheta_exit)
         if (len(parameters["tp_exit"]) > 1): strategy_code += "_TP_" + str(tp_exit) 
         if (len(parameters["sl_exit"]) > 1): strategy_code += "_SL_" + str(sl_exit)
+        if (len(parameters["delta"]) > 1): strategy_code += "_D_" + str(delta)
     
         
         if strategy_code == "": 
@@ -97,13 +100,9 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             strategy_code = strategy_code[1:]
         strategy_code = strategy_code.replace("None", "X")
 
-        
-        if printalot: print strategy_code 
-        if printalot: print 
-
     
         if (strategy.name =="bf70" or strategy.name == "bf70_plus") and (cheap_entry == None) and (down_day_entry == False) and (patient_entry == True): 
-            if printalot: print "continue"
+            if printalot: print("continue")
             continue
         
 
@@ -127,12 +126,11 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
 
-    
-        single_entries = entries.getEntries(strategy.underlying, start, end, dte_entry, True, False)
-
+        
+        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, True, False)
+                
         for e in range(len(single_entries)): 
             entry = single_entries[e]
-#             print entry['entrydate']
                                 
             if entry['entrydate'] >= (datetime.now().date() - timedelta(days=7)):
                 break 
@@ -145,11 +143,11 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                 except IndexError: 
                     continue
                 
-            
-            strategy.setParameters(cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit)
+                
+            strategy.setParameters(cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta)
+#             print(entry['entrydate'])
             result = run_strategies.fly(strategy, risk_capital, entry['entrydate'], entry['expiration'])
-    
-            
+                
             if (not result is None): 
                 trade_nr += 1
                 i += 1
@@ -171,7 +169,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                 percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
                 
                 trade_log[i] = [strategy_code, trade_nr, entry['expiration'], result['entry_date'], result['strikes'], round(result['entry_price'],2), result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), str(percentage) + '%', result['exit']]
-                print trade_log[i] 
+                print(trade_log[i])
                 
                 total_positions += int(result['position_size'])
                 
@@ -197,21 +195,15 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                     exits[result['exit']] = 1
     
         if (total_daily_pnls is None): 
-            print "no trades" 
+            print("no trades")
             continue 
         
         total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
     
-        sharpe = performance.sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        annualized_sharpe = round((np.sqrt(252) * sharpe),2)
-        sortino = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        annualized_sortino = round((np.sqrt(252) * sortino),2)
-    
-#         print "Annualized Sharpe Ratio: " + str(annualized_sharpe)
-#         print "Annualized Sortino Ratio: " + str(annualized_sortino)
-        
-        
+        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
+        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
+
         
         for key, value in total_daily_pnls.iterrows():
             j+=1
@@ -252,8 +244,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         rod = round((average_percentage / (total_dit / trade_nr)),2)
 
         if printalot: print 
-        for key, value in exits.iteritems():
-            if printalot: print key + " exit: \t" + str(value) 
+        for key, value in exits.items():
+            if printalot: print(key + " exit: \t" + str(value))
             
         days = (end - start).days
         years = round((days / 365),2)
@@ -264,7 +256,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         rrr = round((annualized_RoR / -max_dd_risk_percentage),2)
         
 
-        results_table[strategy_code] = [trade_nr, annualized_sharpe, annualized_sortino, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
+        results_table[strategy_code] = [trade_nr, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
 
     df_table = pd.DataFrame(data=results_table, index = ["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
     df_table.to_html("results/" + strategy.name + "_results_table.html")
@@ -274,6 +266,6 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
     
     df_log = pd.DataFrame(data=trade_log, index = ["strategy_code","trade nr.","expiration", "entry_date", "strikes", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
     df_log.to_csv("results/" + strategy.name + "_single_results.csv")
-    
-    print df_table
+
+    print(df_table)
     
