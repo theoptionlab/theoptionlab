@@ -4,7 +4,7 @@
 
 3) Install dependencies: pip install -r requirements.txt 
 
-4) mysql: https://www.mysql.com/
+4) postgres database 
 
 5) database and tables with script in create_db_postresql.sql
 $ psql -h host -d optiondata -U user -f /path/to/create_db_postresql.sql
