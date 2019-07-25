@@ -29,7 +29,7 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration):
     try:
         atm_option = util.Option(connector, current_date, underlying, atm_strike, expiration, "p")
     except ValueError: 
-        return "missing data"
+        return None
     midprice = connector.query_midprice(current_date, atm_option)
     
         

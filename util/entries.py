@@ -52,21 +52,19 @@ def getNextEntry(connector, underlying, refDate, days, regular, eom):
 
 
 def getEntries(connector, underlying, start, end, days, regular, eom):
-    
     entries = []
     running = True
     
     current_date = start 
     
     while running:
-
+            
         year = current_date.year
         month = current_date.month
         monthcal = c.monthdatescalendar(year, month)
         third_friday = [day for week in monthcal for day in week if day.weekday() == calendar.FRIDAY and day.month == month][2]
-        
         if regular: 
-                    
+                                
             entry_regular = {}
             entry_regular['expiration'] = third_friday
             exists = connector.check_exists(underlying, third_friday)
@@ -76,10 +74,11 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                 
                 exists = connector.check_exists(underlying, third_saturday)
                 if (exists == 0): 
-                    break;
+                    current_date += relativedelta(months=1)
+                    continue;
                 
                 else: 
-                    entry_regular['expiration'] = third_saturday    
+                    entry_regular['expiration'] = third_saturday 
     
             entry_regular['entrydate'] = entry_regular['expiration']  - timedelta(days) 
             if entry_regular['entrydate'] >= start: 
@@ -88,7 +87,7 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                           
             if entry_regular['entrydate'] >= end: 
                 running = False  
-
+                
         if eom:
             
             last_day = offset.rollforward(third_friday).date()

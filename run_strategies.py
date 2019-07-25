@@ -3,9 +3,8 @@ from __future__ import division
 from util import util
 from datetime import timedelta, datetime 
 
-
 def fly(strategy, risk_capital, entrydate, expiration): 
-            
+                
     flying = True 
     dailypnls = {}
     previouspnl = 0
@@ -53,6 +52,8 @@ def fly(strategy, risk_capital, entrydate, expiration):
 
     # size up 
     max_risk = combo.getMaxRisk()
+    if max_risk is None:
+        return None 
     
     position_size = int(risk_capital/abs(max_risk))
         

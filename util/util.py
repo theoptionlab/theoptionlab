@@ -129,12 +129,19 @@ class Combo(object):
     
         el = getExpiration(self)
         lower_expiration_line = el["lower_expiration_line"]
+#         print(lower_expiration_line)
         upper_expiration_line = el["upper_expiration_line"]
+#         print(upper_expiration_line)
         
         if ((lower_expiration_line == 0) and (upper_expiration_line == 0)): 
             return None 
         
-        max_risk = min(lower_expiration_line, upper_expiration_line)
+        if ((lower_expiration_line == None) and (upper_expiration_line == None)): 
+            return None  
+        
+        # hack for strangle 
+        max_risk = lower_expiration_line
+#         max_risk = min(lower_expiration_line, upper_expiration_line)
         
         return max_risk
 
@@ -164,6 +171,19 @@ class PutCreditSpread(Combo):
         positions = [] 
         positions.append(self.shortposition)
         positions.append(self.longposition)
+        return positions  
+
+
+class Strangle(Combo):
+    
+    def __init__(self, putposition, callposition):
+        self.putposition = putposition
+        self.callposition = callposition
+        
+    def getPositions(self):
+        positions = [] 
+        positions.append(self.putposition)
+        positions.append(self.callposition)
         return positions  
     
     
@@ -438,11 +458,23 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
 
 def getLowerExpiration(combo):
     
+
+    
     lower_expiration_line = 0
     positions = combo.getPositions()
     
     for position in positions:
+        
+        if position.entry_price is None:
+            return None  
+    
         lower_value = black_scholes.black_scholes(position.option.type, lower_ul, position.option.strike, 0, interest, 0)
+#         print()
+#         print(lower_value)
+#         print(position.entry_price)
+#         print(ratio)
+#         print(position.amount)
+#         print()
         lower_expiration = ((lower_value - position.entry_price) * ratio * position.amount)
         lower_expiration_line += lower_expiration
     
@@ -450,11 +482,15 @@ def getLowerExpiration(combo):
   
     
 def getUpperExpiration(combo):
-    
+        
     upper_expiration_line = 0
     positions = combo.getPositions()
     
     for position in positions:
+        
+        if position.entry_price is None:
+            return None
+        
         upper_value = black_scholes.black_scholes(position.option.type, upper_ul, position.option.strike, 0, interest, 0)
         upper_expiration = ((upper_value - position.entry_price) * ratio * position.amount)
         upper_expiration_line += upper_expiration
