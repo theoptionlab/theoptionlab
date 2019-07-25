@@ -20,6 +20,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
     if printalot: print()
     
     
+    
+    
     s = []
     for parameter_name, parameter in parameters.items(): 
         if parameter is not [None]:
@@ -118,7 +120,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         exits = {}
         total_dit = 0
         total_daily_pnls = None 
-        total = 200000
+#         total = risk_capital
+        total = 2000000
         total_positions = 0
         
         running_global_peak = 0
@@ -126,10 +129,10 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
 
-        
         single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, True, False)
-                
+              
         for e in range(len(single_entries)): 
+            
             entry = single_entries[e]
                                 
             if entry['entrydate'] >= (datetime.now().date() - timedelta(days=7)):
@@ -147,7 +150,9 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             strategy.setParameters(cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta)
 #             print(entry['entrydate'])
             result = run_strategies.fly(strategy, risk_capital, entry['entrydate'], entry['expiration'])
-                
+            
+#             print(result)
+            
             if (not result is None): 
                 trade_nr += 1
                 i += 1
@@ -220,7 +225,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                     max_dd = total - running_global_peak
                     running_max_dd_date = key
                     max_dd_percentage = round((max_dd / running_global_peak * 100),2)  
-                    max_dd_risk_percentage = round((max_dd / 100000 * 100),2)  
+                    max_dd_risk_percentage = round((max_dd / risk_capital * 100),2)  
                     max_dd_duration = abs((running_global_peak_date - running_max_dd_date).days)
             
         
@@ -251,7 +256,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         years = round((days / 365),2)
         
         annualized_pnl = int(total_pnl) / years 
-        annualized_RoR = round((annualized_pnl / 100000 * 100),2)
+        annualized_RoR = round((annualized_pnl / risk_capital * 100),2)
         
         rrr = round((annualized_RoR / -max_dd_risk_percentage),2)
         
