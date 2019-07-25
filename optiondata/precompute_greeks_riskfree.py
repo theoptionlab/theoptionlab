@@ -4,7 +4,7 @@ from py_vollib.black_scholes import implied_volatility
 from py_vollib.black_scholes.greeks import analytical 
 from util import util
 from private import settings
-import riskfree
+from optiondata import riskfree
 
 
 def precompute(underlying):
@@ -20,7 +20,7 @@ def precompute(underlying):
     result = cur2.fetchall()
     print(str(len(result)) + " items to precompute")
 
-    df_yields = create_libor()
+    df_yields = riskfree.create_libor()
     
     for row in result:
         rowid = row[0]
@@ -38,7 +38,7 @@ def precompute(underlying):
         expiration_time = datetime.combine(expiration, time(16, 0))
         remaining_time_in_years = util.remaining_time(quote_date, expiration_time)
         
-        rf = calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
+        rf = riskfree.calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
 
         iv = 0.001
         delta = 0.001 
