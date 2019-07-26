@@ -4,9 +4,12 @@ from py_vollib.black_scholes import implied_volatility
 from py_vollib.black_scholes.greeks import analytical 
 from util import util
 from private import settings
+from optiondata import riskfree
 
 
-def precompute(underlying):
+def precompute(underlying, include_riskfree):
+    
+    rf = util.interest
     
     print("precompute: " + str(underlying))
     print 
@@ -19,6 +22,9 @@ def precompute(underlying):
     result = cur2.fetchall()
     print(str(len(result)) + " items to precompute")
     
+    if include_riskfree: 
+        df_yields = riskfree.create_libor() 
+        
     for row in result:
         rowid = row[0]
         quote_date = row[1]
@@ -34,14 +40,18 @@ def precompute(underlying):
         
         expiration_time = datetime.combine(expiration, time(16, 0))
         remaining_time_in_years = util.remaining_time(quote_date, expiration_time)
+        
+        if include_riskfree: 
+            rf = riskfree.calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
             
         delta = 0.001 
         theta = 0.001 
         vega = 0.001 
         
         if remaining_time_in_years > 0: 
+            
             try:
-                iv = implied_volatility.implied_volatility(midprice, current_quote, int(strike), remaining_time_in_years, util.interest, option_type)
+                iv = implied_volatility.implied_volatility(midprice, current_quote, int(strike), remaining_time_in_years, rf, option_type)
             except: 
                 iv = 0.001
                 
