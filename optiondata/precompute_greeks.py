@@ -4,13 +4,50 @@ from py_vollib.black_scholes import implied_volatility
 from py_vollib.black_scholes.greeks import analytical 
 from util import util
 from private import settings
-from optiondata import riskfree
+import pandas as pd
+import numpy as np 
+from scipy.interpolate import InterpolatedUnivariateSpline as interpol
+
+
+def calc_riskfree_libor(df_yields, dt, dte):
+    df = df_yields.query('index==@dt')
+    
+    ON = df.iloc[0]['ON']
+    w1 = df.iloc[0]['w1']
+    m1 = df.iloc[0]['m1']
+    m2= df.iloc[0]['m2']
+    m3 = df.iloc[0]['m3']
+    m6 = df.iloc[0]['m6']
+    m12 = df.iloc[0]['m12']
+
+    years = ([0.0, 1/360, 1/52, 1/12, 2/12, 3/12, 6/12, 12/12])
+    rates = ([0.0, ON/100, w1/100, m1/100, m2/100, m3/100, m6/100, m12/100])
+    
+    df_inter = pd.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+    df_inter.loc[0] = years
+    df_inter.loc[1] = rates
+    df_inter = df_inter.dropna(axis='columns')
+    # print(df_inter)
+
+    f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
+    y = float(dte)
+    rf = f(y)
+    rf = np.round(rf, decimals=4)
+    return rf
 
 
 def precompute(underlying, include_riskfree):
     
     rf = util.interest
     
+    if include_riskfree: 
+        df_yields = pd.read_csv("libor/libor_full.csv")
+        cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
+        df_yields.columns = cols
+        df_yields['date'] = pd.to_datetime(df_yields['date'])
+        df_yields.set_index('date',inplace=True)
+        
+        
     print("precompute: " + str(underlying))
     print 
     
@@ -21,10 +58,7 @@ def precompute(underlying, include_riskfree):
     cur2.execute(query)
     result = cur2.fetchall()
     print(str(len(result)) + " items to precompute")
-    
-    if include_riskfree: 
-        df_yields = riskfree.create_libor() 
-        
+            
     for row in result:
         rowid = row[0]
         quote_date = row[1]
@@ -42,7 +76,7 @@ def precompute(underlying, include_riskfree):
         remaining_time_in_years = util.remaining_time(quote_date, expiration_time)
         
         if include_riskfree: 
-            rf = riskfree.calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
+            rf = calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
             
         delta = 0.001 
         theta = 0.001 

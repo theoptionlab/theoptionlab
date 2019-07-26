@@ -6,6 +6,6 @@ from optiondata import precompute_greeks
 symbols = ["^RUT"]
 
 for symbol in symbols: 
-    
+
 #     insert_data.insert(symbol)
     precompute_greeks.precompute(symbol, True)
