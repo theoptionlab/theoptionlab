@@ -39,8 +39,6 @@ def precompute(underlying):
         remaining_time_in_years = util.remaining_time(quote_date, expiration_time)
         
         rf = riskfree.calc_riskfree_libor(df_yields, quote_date, remaining_time_in_years)
-
-        iv = 0.001
         delta = 0.001 
         theta = 0.001 
         vega = 0.001 
@@ -55,7 +53,7 @@ def precompute(underlying):
             theta = analytical.theta(option_type, current_quote, strike, remaining_time_in_years, rf, iv) * 100 
             vega = analytical.vega(option_type, current_quote, strike, remaining_time_in_years, rf, iv) * 100 
         
-        updateQuery = "UPDATE optiondata SET rf =%s, iv=%s, delta=%s, theta=%s, vega=%s WHERE id=%s" % (rf, iv, delta, theta, vega, rowid)
+        updateQuery = "UPDATE optiondata SET iv=%s, delta=%s, theta=%s, vega=%s WHERE id=%s" % (iv, delta, theta, vega, rowid)
         try: 
             cur2.execute(updateQuery)
             db.commit()

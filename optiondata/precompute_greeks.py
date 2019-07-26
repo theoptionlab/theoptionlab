@@ -35,7 +35,6 @@ def precompute(underlying):
         expiration_time = datetime.combine(expiration, time(16, 0))
         remaining_time_in_years = util.remaining_time(quote_date, expiration_time)
             
-        iv = 0.001
         delta = 0.001 
         theta = 0.001 
         vega = 0.001 
