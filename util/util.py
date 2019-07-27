@@ -8,7 +8,8 @@ from pandas.tseries.offsets import BMonthEnd
 from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
 from datetime import datetime, time, timedelta
 from py_vollib import black_scholes
-
+import zipfile 
+from private import settings
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
@@ -607,4 +608,13 @@ def bs_option_price(connector, underlying, expiration, option_type, strike, curr
     
     return float(price)
 
+    
+def unzip(datafilepath): 
+    
+    archive = zipfile.ZipFile(datafilepath)
+    
+    for ffile in archive.namelist():
+        archive.extract(ffile, settings.tempbasepath)
+        unzippedpath = settings.tempbasepath + ffile
+        return unzippedpath 
     
