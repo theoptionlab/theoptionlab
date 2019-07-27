@@ -9,35 +9,36 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as interpol
 
 
-def calc_riskfree_libor(df_yields, dt, dte):
-    df = df_yields.query('index==@dt')
-    
-    ON = df.iloc[0]['ON']
-    w1 = df.iloc[0]['w1']
-    m1 = df.iloc[0]['m1']
-    m2= df.iloc[0]['m2']
-    m3 = df.iloc[0]['m3']
-    m6 = df.iloc[0]['m6']
-    m12 = df.iloc[0]['m12']
+years = ([0.0, 1/360, 1/52, 1/12, 2/12, 3/12, 6/12, 12/12])
 
-    years = ([0.0, 1/360, 1/52, 1/12, 2/12, 3/12, 6/12, 12/12])
-    rates = ([0.0, ON/100, w1/100, m1/100, m2/100, m3/100, m6/100, m12/100])
-    
-    df_inter = pd.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
-    df_inter.loc[0] = years
-    df_inter.loc[1] = rates
-    df_inter = df_inter.dropna(axis='columns')
-    # print(df_inter)
+def calc_riskfree_libor(df_yields, dt, yte):
 
-    f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
-    y = float(dte)
-    rf = f(y)
-    rf = np.round(rf, decimals=4)
-    return rf
+    
+    try:  
+        df = df_yields.query('index==@dt')
+        dr = df.iloc[0]
+        rates = ([0.0, dr['ON']/100, dr['w1']/100, dr['m1']/100, dr['m2']/100, dr['m3']/100, dr['m6']/100, dr['m12']/100])
+        
+        df_inter = pd.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+        df_inter.loc[0] = years
+        df_inter.loc[1] = rates
+        df_inter = df_inter.dropna(axis='columns')
+    
+        f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
+        y = float(yte)
+        rf = f(y)
+        rf = np.round(rf, decimals=4)
+        return rf
+    
+    except Exception as e: 
+        print (dt) 
+        print(e)
+        
 
 
 def precompute(underlying, include_riskfree):
     
+    counter = 0 
     rf = util.interest
     
     if include_riskfree: 
@@ -97,6 +98,10 @@ def precompute(underlying, include_riskfree):
         try: 
             cur2.execute(updateQuery)
             db.commit()
+            counter += 1 
+            if (counter %1000) == 0: 
+                print (counter)
+                
         except: 
             print("Except")
             print(rowid)
