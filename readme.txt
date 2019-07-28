@@ -13,6 +13,6 @@ $ psql -h host -d optiondata -U user -f /path/to/create_db_postresql.sql
 
 7) try to run insert_fullday.py and then free_money_scanner.py 
 
-8) And then you are ready to insert all the data and precompute the greeks, with or without the risk free rate! 
+8) And then you are ready to insert all the data and precompute the greeks (takes a while), with or without the risk free rate (takes an even longer while)! 
 
 9) Once the data is in place, run your first backtest with call_backtests.py 
