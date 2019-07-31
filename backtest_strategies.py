@@ -20,8 +20,6 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
     if printalot: print()
     
     
-    
-    
     s = []
     for parameter_name, parameter in parameters.items(): 
         if parameter is not [None]:
@@ -108,7 +106,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             continue
         
 
-        trade_nr = 0
+        number_of_trades = 0
         winners = 0 
         allwinners = 0
         allloosers = 0
@@ -120,8 +118,9 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         exits = {}
         total_dit = 0
         total_daily_pnls = None 
-#         total = risk_capital
-        total = 2000000
+        initial_portfolio_size = risk_capital * 2
+#         initial_portfolio_size = 2000000 
+        total = initial_portfolio_size
         total_positions = 0
         
         running_global_peak = 0
@@ -148,13 +147,11 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                 
                 
             strategy.setParameters(cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta)
-#             print(entry['entrydate'])
             result = run_strategies.fly(strategy, risk_capital, entry['entrydate'], entry['expiration'])
             
-#             print(result)
             
             if (not result is None): 
-                trade_nr += 1
+                number_of_trades += 1
                 i += 1
     
                 daily_pnls = pd.DataFrame.from_dict(result['dailypnls'], orient='index')
@@ -173,7 +170,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                 pnl = result['pnl'] 
                 percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
                 
-                trade_log[i] = [strategy_code, trade_nr, entry['expiration'], result['entry_date'], result['strikes'], round(result['entry_price'],2), result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), str(percentage) + '%', result['exit']]
+                trade_log[i] = [strategy_code, number_of_trades, entry['expiration'], result['entry_date'], result['strikes'], round(result['entry_price'],2), result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), str(percentage) + '%', result['exit']]
                 print(trade_log[i])
                 
                 total_positions += int(result['position_size'])
@@ -229,10 +226,10 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                     max_dd_duration = abs((running_global_peak_date - running_max_dd_date).days)
             
         
-        average_pnl = int(total_pnl / trade_nr)
-        average_risk = int(total_risk / trade_nr)
+        average_pnl = int(total_pnl / number_of_trades)
+        average_risk = int(total_risk / number_of_trades)
         average_percentage = round(total_pnl / abs(total_risk) * 100, 2)
-        percentage_winners = int((winners / trade_nr) * 100)
+        percentage_winners = int((winners / number_of_trades) * 100)
 
         try: 
             average_winner = int(allwinners/winners)
@@ -240,13 +237,13 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             average_winner = 0
             
         try: 
-            average_looser = int(allloosers/(trade_nr-winners))
+            average_looser = int(allloosers/(number_of_trades-winners))
         except ZeroDivisionError:
             average_looser = 0
             
-        average_dit = int(total_dit / trade_nr)
-        average_position_size = total_positions / trade_nr
-        rod = round((average_percentage / (total_dit / trade_nr)),2)
+        average_dit = int(total_dit / number_of_trades)
+        average_position_size = total_positions / number_of_trades
+        rod = round((average_percentage / (total_dit / number_of_trades)),2)
 
         if printalot: print 
         for key, value in exits.items():
@@ -261,7 +258,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         rrr = round((annualized_RoR / -max_dd_risk_percentage),2)
         
 
-        results_table[strategy_code] = [trade_nr, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
+        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
 
     df_table = pd.DataFrame(data=results_table, index = ["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
     df_table.to_html("results/" + strategy.name + "_results_table.html")
