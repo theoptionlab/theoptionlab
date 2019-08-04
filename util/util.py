@@ -10,6 +10,17 @@ from datetime import datetime, time, timedelta
 from py_vollib import black_scholes
 import zipfile 
 from private import settings
+import numpy as np 
+from scipy.interpolate import InterpolatedUnivariateSpline as interpol
+
+years = ([0.0, 1/360, 1/52, 1/12, 2/12, 3/12, 6/12, 12/12])
+functions_dict = {}
+
+df_yields = pandas.read_csv(settings.path_to_libor_csv)
+cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
+df_yields.columns = cols
+df_yields['date'] = pandas.to_datetime(df_yields['date'])
+df_yields.set_index('date',inplace=True)
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
@@ -19,10 +30,9 @@ ratio = 100
 lower_ul = 1
 upper_ul = 1000000
 dividend = 0
-# commissions = 0
 commissions = 1.25
 
-interest = 0.001
+interest = 2.25
 yeartradingdays = 252
 
 cal = get_calendar('USFederalHolidayCalendar')  # Create calendar instance
@@ -32,7 +42,6 @@ tradingCal = HolidayCalendarFactory('TradingCalendar', cal, GoodFriday)
 
 dr = pandas.date_range(start='2010-06-01', end='2019-01-01')
 
-# new instance of class
 cal1 = tradingCal()
 holidays = cal1.holidays(start=dr.min(), end=dr.max()).date
 
@@ -130,9 +139,7 @@ class Combo(object):
     
         el = getExpiration(self)
         lower_expiration_line = el["lower_expiration_line"]
-#         print(lower_expiration_line)
         upper_expiration_line = el["upper_expiration_line"]
-#         print(upper_expiration_line)
         
         if ((lower_expiration_line == 0) and (upper_expiration_line == 0)): 
             return None 
@@ -149,9 +156,9 @@ class Combo(object):
 
 class PutButterfly(Combo):
     
-    def __init__(self, upperlongposition, cs_shortposition, lowerlongposition):
+    def __init__(self, upperlongposition, shortposition, lowerlongposition):
         self.upperlongposition = upperlongposition
-        self.shortposition = cs_shortposition
+        self.shortposition = shortposition
         self.lowerlongposition = lowerlongposition
         
     def getPositions(self):
@@ -312,7 +319,7 @@ def getCurrentPnLPosition(connector, position, current_date):
     if current_date >= position.option.expiration:
         current_date = position.option.expiration 
         midprice = bs_option_price(connector, position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
-        current_commissions = commissions * (abs(position.amount)) # expired, only commissoins for entry
+        current_commissions = commissions * (abs(position.amount)) # expired, only commissions for entry
     
     while midprice is None: 
 
@@ -433,10 +440,10 @@ def getTheta(connector, combo, current_date):
     return theta_sum          
                 
                 
-def getDeltaTheta(connector, underlying, combo, current_date, expiration):
-    
-    delta_sum = getDelta(connector, combo, current_date, expiration, underlying) 
-    theta_sum = getTheta(connector, combo, current_date, expiration, underlying) 
+def getDeltaTheta(connector, combo, current_date):
+            
+    delta_sum = getDelta(connector, combo, current_date) 
+    theta_sum = getTheta(connector, combo, current_date) 
 
     deltatheta = abs(delta_sum) / abs(theta_sum)
     return deltatheta
@@ -457,42 +464,42 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
     return deltatheta_exit
 
 
-def getLowerExpiration(combo):
-    
-
+def getLowerExpiration(combo, include_riskfree = True):
     
     lower_expiration_line = 0
     positions = combo.getPositions()
     
     for position in positions:
         
-        if position.entry_price is None:
+        if (position is None) or (position.entry_price is None):
             return None  
+            
+        rf = interest
+        if include_riskfree: 
+            rf = get_riskfree_libor(position.option.expiration, 0)
     
-        lower_value = black_scholes.black_scholes(position.option.type, lower_ul, position.option.strike, 0, interest, 0)
-#         print()
-#         print(lower_value)
-#         print(position.entry_price)
-#         print(ratio)
-#         print(position.amount)
-#         print()
+        lower_value = black_scholes.black_scholes(position.option.type, lower_ul, position.option.strike, 0, rf, 0)
         lower_expiration = ((lower_value - position.entry_price) * ratio * position.amount)
         lower_expiration_line += lower_expiration
     
     return lower_expiration_line
   
     
-def getUpperExpiration(combo):
+def getUpperExpiration(combo, include_riskfree = True):
         
     upper_expiration_line = 0
     positions = combo.getPositions()
     
     for position in positions:
         
-        if position.entry_price is None:
+        if (position is None) or (position.entry_price is None):
             return None
-        
-        upper_value = black_scholes.black_scholes(position.option.type, upper_ul, position.option.strike, 0, interest, 0)
+
+        rf = interest
+        if include_riskfree: 
+            rf = get_riskfree_libor(position.option.expiration, 0)
+            
+        upper_value = black_scholes.black_scholes(position.option.type, upper_ul, position.option.strike, 0, rf, 0)
         upper_expiration = ((upper_value - position.entry_price) * ratio * position.amount)
         upper_expiration_line += upper_expiration
     
@@ -529,6 +536,67 @@ def getExpirationGroup(group):
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
 
 
+def getLowerBreakpoint(combo, current_date, include_riskfree = True): 
+    
+    lowest = combo.lowerlongposition.option.strike  
+    highest = combo.upperlongposition.option.strike  
+        
+    quote = lowest 
+    while quote < highest: 
+        
+        sum_guv = 0 
+        positions = combo.getPositions()
+        for position in positions: 
+            
+            expiration_time = datetime.combine(position.option.expiration, time(16))
+            remaining_time_in_years = remaining_time(current_date, expiration_time)
+            
+            rf = interest
+            if include_riskfree: 
+                rf = get_riskfree_libor(current_date, remaining_time_in_years)
+    
+            value = black_scholes.black_scholes(position.option.type, quote, position.option.strike, remaining_time_in_years, rf, 0)
+            guv = ((value - position.entry_price) * ratio * position.amount)
+            sum_guv += guv
+        
+        if (sum_guv > 0): 
+            return quote
+        
+        quote += 0.1
+        
+
+def getLowerBreakpointGroup(group, current_date, include_riskfree = True): 
+
+    lowest = group.getLowest().lowerlongposition.option.strike 
+    highest = group.getHighest().upperlongposition.option.strike  
+        
+    quote = lowest 
+    while quote < highest: 
+        
+        sum_guv = 0
+        
+        combos = group.getCombos() 
+        for combo in combos: 
+            positions = combo.getPositions()
+            for position in positions:   
+                
+                expiration_time = datetime.combine(position.option.expiration, time(16))
+                remaining_time_in_years = remaining_time(current_date, expiration_time)
+                
+                rf = interest
+                if include_riskfree: 
+                    rf = get_riskfree_libor(current_date, remaining_time_in_years)
+                
+                value = black_scholes.black_scholes(position.option.type, quote, position.option.strike, remaining_time_in_years, rf, 0)
+                guv = ((value - position.entry_price) * ratio * position.amount)
+                sum_guv += guv
+        
+        if (sum_guv > 0): 
+            return quote
+        
+        quote += 0.1
+        
+        
 def getDownDay(connector, underlying, date, strategy):
     
     down_definition = 0
@@ -590,7 +658,7 @@ def testPCS(connector, short_strike, current_date, underlying, expiration, posit
     return pcs
 
 
-def bs_option_price(connector, underlying, expiration, option_type, strike, current_date): 
+def bs_option_price(connector, underlying, expiration, option_type, strike, current_date, include_riskfree = True): 
     
     price = None 
     
@@ -604,7 +672,11 @@ def bs_option_price(connector, underlying, expiration, option_type, strike, curr
         expiration_time = datetime.combine(expiration, time(16))
         remaining_time_in_years = remaining_time(current_date, expiration_time)
         
-        price = black_scholes.black_scholes(option_type, current_quote, strike, remaining_time_in_years, interest, 0.151)
+        rf = interest
+        if include_riskfree: 
+            rf = get_riskfree_libor(current_date, remaining_time_in_years)
+                
+        price = black_scholes.black_scholes(option_type, current_quote, strike, remaining_time_in_years, rf, 0.151)
     
     return float(price)
 
@@ -618,3 +690,26 @@ def unzip(datafilepath):
         unzippedpath = settings.tempbasepath + ffile
         return unzippedpath 
     
+
+def get_riskfree_libor(date, yte):
+    
+    # compute only once per date 
+    if date in functions_dict:
+        f = functions_dict[date]
+
+    else: 
+        df = df_yields.query('index==@date')
+        dr = df.iloc[0]
+        rates = ([0.0, dr['ON']/100, dr['w1']/100, dr['m1']/100, dr['m2']/100, dr['m3']/100, dr['m6']/100, dr['m12']/100])
+        
+        df_inter = pandas.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+        df_inter.loc[0] = years
+        df_inter.loc[1] = rates
+        df_inter = df_inter.dropna(axis='columns')
+        f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
+        functions_dict[date] = f 
+        
+    y = float(yte)
+    rf = f(y)
+    rf = np.round(rf, decimals=4)
+    return rf

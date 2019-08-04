@@ -52,7 +52,14 @@ class MyDB(object):
         expiration = row[0]
         return expiration
 
-      
+    def select_iv(self, quote_date, underlying_symbol, expiration, option_type, strike):
+        query = "SELECT iv FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "' AND option_type = '" + option_type + "' AND strike = '" + str(strike) + "'"
+        self.query(query)
+        row = self._db_cur.fetchone()
+        if row is None: return None 
+        iv = row[0]
+        return float(iv) 
+       
     def select_delta(self, quote_date, underlying_symbol, expiration, option_type, strike):
         query = "SELECT delta FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "' AND option_type = '" + option_type + "' AND strike = '" + str(strike) + "'"
         self.query(query)
