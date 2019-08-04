@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# see https://theoptionlab.com/research/bf70.html
+# results visualised on https://theoptionlab.com
 
 from util import util
 from util import expected_value

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from util import util
 from util import performance
 import itertools
 import run_strategies
@@ -9,8 +10,9 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import collections
+import os 
 
-def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters): 
+def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters, monthly = True, end_of_month = False, include_riskfree = True): 
     
     if printalot: print("strategy_name_extra: " + str(strategy_flavor))
     if printalot: print("risk_capital: " + str(risk_capital))
@@ -83,14 +85,17 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         if ((len(parameters["ew_exit"]) > 1) and ew_exit): strategy_code += "E"
         if min_vix_entry is not None: strategy_code += "_MIV_" + str(min_vix_entry)
         if max_vix_entry is not None: strategy_code += "_MAV_" + str(max_vix_entry)
-        if (len(parameters["dte_entry"]) > 1): strategy_code += "_DTE_" + str(dte_entry)
+        if (len(parameters["dte_entry"]) > 1): strategy_code += "_E" + str(dte_entry)
         if els_entry is not None: strategy_code += "_EE_" + str(els_entry)
-        if pct_exit is not None: strategy_code += "_DC_" + str(int(pct_exit * 100))
-        if ((len(parameters["dte_exit"]) > 1) and dte_exit != 0): strategy_code += "_EXDTE_" + str(dte_exit)
+        if pct_exit is not None: strategy_code += "_C" + str(int(pct_exit * 100))
+        if ((len(parameters["dte_exit"]) > 1) and dte_exit != 0): strategy_code += "_X" + str(dte_exit)
         if ((len(parameters["dit_exit"]) > 1) and dit_exit != 0): strategy_code += "_EXDIT_" + str(dit_exit)
-        if (len(parameters["deltatheta_exit"]) > 1): strategy_code += "_DTR_" + str(deltatheta_exit)
-        if (len(parameters["tp_exit"]) > 1): strategy_code += "_TP_" + str(tp_exit) 
-        if (len(parameters["sl_exit"]) > 1): strategy_code += "_SL_" + str(sl_exit)
+        if (len(parameters["deltatheta_exit"]) > 1): strategy_code += "_DT_" + str(deltatheta_exit)
+        code_tp = tp_exit
+        if (code_tp is not None) and code_tp < 1: 
+            code_tp = int(code_tp * 100)
+        if (len(parameters["tp_exit"]) > 1): strategy_code += "_P" + str(code_tp)
+        if (len(parameters["sl_exit"]) > 1): strategy_code += "_L" + str(sl_exit)
         if (len(parameters["delta"]) > 1): strategy_code += "_D_" + str(delta)
     
         
@@ -118,17 +123,15 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         exits = {}
         total_dit = 0
         total_daily_pnls = None 
-        initial_portfolio_size = risk_capital * 2
-#         initial_portfolio_size = 2000000 
-        total = initial_portfolio_size
+        total = risk_capital
         total_positions = 0
         
         running_global_peak = 0
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
-
-        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, True, False)
+        
+        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, monthly, end_of_month)
               
         for e in range(len(single_entries)): 
             
@@ -153,18 +156,15 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
+                
+                daily_pnls = result['dailypnls']
     
-                daily_pnls = pd.DataFrame.from_dict(result['dailypnls'], orient='index')
-                daily_pnls = daily_pnls.reindex(daily_pnls.index.rename('date'))
-                daily_pnls.index = pd.to_datetime(daily_pnls.index)
-                daily_pnls.sort_index(inplace=True)
-                daily_pnls.columns = ['pnl']
                 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
                     
                 else: 
-                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(["date"], as_index=True).sum()
+                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', sort=True, ignore_index=False).groupby(["date"], as_index=True).sum()
                     total_daily_pnls.sort_index(inplace=True)
     
                 pnl = result['pnl'] 
@@ -200,17 +200,18 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             print("no trades")
             continue 
         
-        total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
+        total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total 
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
-    
-        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
+
+        rf = util.interest
+        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], rf)
+        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], rf)
 
         
         for key, value in total_daily_pnls.iterrows():
             j+=1
             total += value['pnl']
-            equity_curve[j] = [strategy_code, key.date(), int(total)]
+            equity_curve[j] = [strategy_code, key, int(total)]
                              
             if total >= running_global_peak: 
                 running_global_peak = total
@@ -256,18 +257,30 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         annualized_RoR = round((annualized_pnl / risk_capital * 100),2)
         
         rrr = round((annualized_RoR / -max_dd_risk_percentage),2)
-        
 
-        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
+        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date, max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
+
+
+    path = os.getcwd()
+    print ("The current working directory is %s" % path)
+
+    path = path + "/results/" + strategy.name 
+    
+    try:
+        os.mkdir(path)
+    except OSError:
+        print ("Creation of the directory %s failed" % path)
+    else:
+        print ("Successfully created the directory %s " % path)
 
     df_table = pd.DataFrame(data=results_table, index = ["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
-    df_table.to_html("results/" + strategy.name + "_results_table.html")
+    df_table.to_html(path + "/" + strategy.name + "_results_table.html")
         
     df_curve = pd.DataFrame(data=equity_curve, index = ["strategy","date","pnl"]).T
-    df_curve.to_csv("results/" + strategy.name + "_results.csv")
+    df_curve.to_csv(path + "/" + strategy.name + "_results.csv")
     
     df_log = pd.DataFrame(data=trade_log, index = ["strategy_code","trade nr.","expiration", "entry_date", "strikes", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
-    df_log.to_csv("results/" + strategy.name + "_single_results.csv")
+    df_log.to_csv(path + "/" + strategy.name + "_single_results.csv")
 
     print(df_table)
     

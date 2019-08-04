@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# see https://theoptionlab.com/research/netzero.html 
+# results visualised on https://theoptionlab.com
 
 from util import util 
 import collections
@@ -16,7 +16,7 @@ parameters["dte_entry"] = [70]
 parameters["els_entry"] = [None]
 parameters["ew_exit"] = [False]
 parameters["pct_exit"] = [0.375, 0.5, 1] 
-parameters["dte_exit"] = [10,30]
+parameters["dte_exit"] = [14]
 parameters["dit_exit"] = [None]
 parameters["deltatheta_exit"] = [None]
 parameters["tp_exit"] = [0.1, 0.5] 
@@ -85,7 +85,7 @@ class netzero(util.Strategy):
         # DIT (days in trade) 
         if ((self.dit_exit is not None) and (dit > self.dit_exit)): 
             return "dit"
-        
+
         # Take Profit
         if ((self.tp_exit is not None) and (current_pnl >= (-max_risk * self.tp_exit))): 
             return "tp"

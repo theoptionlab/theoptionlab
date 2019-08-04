@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# see https://theoptionlab.com/research/bull.html 
+# results visualised on https://theoptionlab.com
 
 import collections
 from util import util
