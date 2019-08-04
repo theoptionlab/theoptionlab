@@ -1,10 +1,8 @@
 from optiondata import insert_data 
 from optiondata import precompute_greeks
 
-# will insert all data from the folder stated in the settings.path_to_data_folder 
-# symbols = ["^RUT", "^SPX"]
-symbols = ["^SPX"]
-
+# insert all data from the directory specified in the settings.path_to_data_directory 
+symbols = ["^RUT", "^SPX"]
 insert_data.insert(symbols)
 
 for symbol in symbols: 

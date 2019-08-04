@@ -11,7 +11,7 @@ df_libor[cols_wo] = df_libor[cols_wo].round(2)
 
 # add missing dates with ffill
 df_libor = df_libor.sort_index()
-idx = pd.date_range('2004-01-01', '2019-07-26')
+idx = pd.date_range('2004-01-01', '2019-12-31')
 df_libor = df_libor.reindex(idx, method="ffill")
 
 # store df_libor in csv
