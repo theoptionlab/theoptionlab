@@ -11,7 +11,9 @@ ratio = 100
 def getExpectedValue(connector, underlying, combo, current_date, expiration, use_precomputed = True, include_riskfree = True): 
 
     current_quote = connector.query_midprice_underlying(underlying, current_date)
-    
+    if  (current_quote == 0.0): 
+        return None 
+        
     expiration_time = datetime.combine(expiration, time(16))
     remaining_time_in_years = util.remaining_time(current_date, expiration_time)
     
@@ -49,13 +51,9 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration, use
             
         if (atm_iv == 0): atm_iv = 0.01
 
-    try: 
-        one_sd = (atm_iv / math.sqrt(util.yeartradingdays/(remaining_time_in_years * util.yeartradingdays))) * current_quote
-    except: 
-        print (util.yeartradingdays) 
-        print (remaining_time_in_years)
-        print (current_quote) 
-        
+
+    one_sd = (atm_iv / math.sqrt(util.yeartradingdays/(remaining_time_in_years * util.yeartradingdays))) * current_quote
+
     lower_ul = current_quote-e_spanne*one_sd
     upper_ul = current_quote+e_spanne*one_sd
     step = (upper_ul - lower_ul) / 24 # war 1000
