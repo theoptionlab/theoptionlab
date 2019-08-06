@@ -49,9 +49,13 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration, use
             
         if (atm_iv == 0): atm_iv = 0.01
 
-    
-    one_sd = (atm_iv / math.sqrt(util.yeartradingdays/(remaining_time_in_years * util.yeartradingdays))) * current_quote
-
+    try: 
+        one_sd = (atm_iv / math.sqrt(util.yeartradingdays/(remaining_time_in_years * util.yeartradingdays))) * current_quote
+    except: 
+        print (util.yeartradingdays) 
+        print (remaining_time_in_years)
+        print (current_quote) 
+        
     lower_ul = current_quote-e_spanne*one_sd
     upper_ul = current_quote+e_spanne*one_sd
     step = (upper_ul - lower_ul) / 24 # war 1000

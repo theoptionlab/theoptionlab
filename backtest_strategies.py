@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-from util import util
 from util import performance
 import itertools
 import run_strategies
@@ -12,7 +11,7 @@ import pandas as pd
 import collections
 import os 
 
-def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters, monthly = True, end_of_month = False, include_riskfree = True): 
+def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters): 
     
     if printalot: print("strategy_name_extra: " + str(strategy_flavor))
     if printalot: print("risk_capital: " + str(risk_capital))
@@ -130,8 +129,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
-        
-        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, monthly, end_of_month)
+
+        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, True, False)
               
         for e in range(len(single_entries)): 
             
@@ -156,15 +155,18 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
-                
-                daily_pnls = result['dailypnls']
     
+                daily_pnls = pd.DataFrame.from_dict(result['dailypnls'], orient='index')
+                daily_pnls = daily_pnls.reindex(daily_pnls.index.rename('date'))
+                daily_pnls.index = pd.to_datetime(daily_pnls.index)
+                daily_pnls.sort_index(inplace=True)
+                daily_pnls.columns = ['pnl']
                 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
                     
                 else: 
-                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', sort=True, ignore_index=False).groupby(["date"], as_index=True).sum()
+                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(["date"], as_index=True).sum()
                     total_daily_pnls.sort_index(inplace=True)
     
                 pnl = result['pnl'] 
@@ -200,18 +202,17 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             print("no trades")
             continue 
         
-        total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total 
+        total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
-
-        rf = util.interest
-        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], rf)
-        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], rf)
+    
+        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
+        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
 
         
         for key, value in total_daily_pnls.iterrows():
             j+=1
             total += value['pnl']
-            equity_curve[j] = [strategy_code, key, int(total)]
+            equity_curve[j] = [strategy_code, key.date(), int(total)]
                              
             if total >= running_global_peak: 
                 running_global_peak = total
@@ -257,9 +258,9 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         annualized_RoR = round((annualized_pnl / risk_capital * 100),2)
         
         rrr = round((annualized_RoR / -max_dd_risk_percentage),2)
+        
 
-        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date, max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
-
+        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
 
     path = os.getcwd()
     print ("The current working directory is %s" % path)
@@ -272,7 +273,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         print ("Creation of the directory %s failed" % path)
     else:
         print ("Successfully created the directory %s " % path)
-
+        
     df_table = pd.DataFrame(data=results_table, index = ["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
     df_table.to_html(path + "/" + strategy.name + "_results_table.html")
         

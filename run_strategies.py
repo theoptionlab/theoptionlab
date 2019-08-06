@@ -2,14 +2,11 @@
 from __future__ import division
 from util import util
 from datetime import timedelta, datetime 
-import pandas  
 
 def fly(strategy, risk_capital, entrydate, expiration): 
                 
     flying = True 
-    dailypnls = pandas.DataFrame(columns=['date', 'pnl'])
-    
-#     dailypnls = {}
+    dailypnls = {}
     previouspnl = 0
     adjustment_counter = 0 
     realized_pnl = 0
@@ -51,6 +48,7 @@ def fly(strategy, risk_capital, entrydate, expiration):
     if combo is None: 
         print("combo is None")
         return None 
+    
 
     # size up 
     max_risk = combo.getMaxRisk()
@@ -98,6 +96,7 @@ def fly(strategy, risk_capital, entrydate, expiration):
         # exit 
         
         current_pnl = util.getCurrentPnL(strategy.connector, combo, current_date) + realized_pnl
+    
         
         if current_pnl is None: 
             print("current_pnl is None")
@@ -108,15 +107,16 @@ def fly(strategy, risk_capital, entrydate, expiration):
 #             print current_pnl
 #             continue 
 
-        dailypnls = dailypnls.append({'date' : current_date , 'pnl' : (current_pnl - previouspnl)} , ignore_index=True)
-                
+        dailypnls[current_date] = current_pnl - previouspnl
         previouspnl = current_pnl 
         dit = (current_date - entry_date ).days
+        
 
         if not flying: 
             return {'exit': "stop", 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price/position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
 
+
         exit_criterion = strategy.checkExit(combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size)
         if exit_criterion != None:
-            dailypnls.set_index('date',inplace=True)
             return {'exit': exit_criterion, 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price/position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
+            

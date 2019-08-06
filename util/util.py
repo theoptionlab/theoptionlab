@@ -32,7 +32,7 @@ upper_ul = 1000000
 dividend = 0
 commissions = 1.25
 
-interest = 2.25
+interest = 0.0225
 yeartradingdays = 252
 
 cal = get_calendar('USFederalHolidayCalendar')  # Create calendar instance
@@ -536,6 +536,41 @@ def getExpirationGroup(group):
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
 
 
+def getQuoteforMarbleOnTop(combo, current_date, include_riskfree = True): 
+    
+    lowest = combo.lowerlongposition.option.strike  
+    highest = combo.upperlongposition.option.strike  
+        
+    quote = lowest 
+    max_guv = 0 
+    max_quote = 0
+    
+    while quote < highest: 
+        
+        sum_guv = 0 
+        positions = combo.getPositions()
+        for position in positions: 
+            
+            expiration_time = datetime.combine(position.option.expiration, time(16))
+            remaining_time_in_years = remaining_time(current_date, expiration_time)
+            
+            rf = interest
+            if include_riskfree: 
+                rf = get_riskfree_libor(current_date, remaining_time_in_years)
+    
+            value = black_scholes.black_scholes(position.option.type, float(quote), position.option.strike, remaining_time_in_years, rf, 0)
+            guv = ((value - position.entry_price) * ratio * position.amount)
+            sum_guv += guv
+        
+        if (sum_guv > max_guv): 
+            max_guv = sum_guv
+            max_quote = quote 
+
+        quote += 1
+    
+    return max_quote 
+        
+        
 def getLowerBreakpoint(combo, current_date, include_riskfree = True): 
     
     lowest = combo.lowerlongposition.option.strike  
@@ -555,14 +590,14 @@ def getLowerBreakpoint(combo, current_date, include_riskfree = True):
             if include_riskfree: 
                 rf = get_riskfree_libor(current_date, remaining_time_in_years)
     
-            value = black_scholes.black_scholes(position.option.type, quote, position.option.strike, remaining_time_in_years, rf, 0)
+            value = black_scholes.black_scholes(position.option.type, float(quote), position.option.strike, remaining_time_in_years, rf, 0)
             guv = ((value - position.entry_price) * ratio * position.amount)
             sum_guv += guv
         
         if (sum_guv > 0): 
             return quote
         
-        quote += 0.1
+        quote += 1
         
 
 def getLowerBreakpointGroup(group, current_date, include_riskfree = True): 
@@ -587,14 +622,14 @@ def getLowerBreakpointGroup(group, current_date, include_riskfree = True):
                 if include_riskfree: 
                     rf = get_riskfree_libor(current_date, remaining_time_in_years)
                 
-                value = black_scholes.black_scholes(position.option.type, quote, position.option.strike, remaining_time_in_years, rf, 0)
+                value = black_scholes.black_scholes(position.option.type, float(quote), position.option.strike, remaining_time_in_years, rf, 0)
                 guv = ((value - position.entry_price) * ratio * position.amount)
                 sum_guv += guv
         
         if (sum_guv > 0): 
             return quote
         
-        quote += 0.1
+        quote += 1
         
         
 def getDownDay(connector, underlying, date, strategy):
@@ -710,6 +745,7 @@ def get_riskfree_libor(date, yte):
         functions_dict[date] = f 
         
     y = float(yte)
-    rf = f(y)
+    rf = f(y) / 100
     rf = np.round(rf, decimals=4)
+    
     return rf
