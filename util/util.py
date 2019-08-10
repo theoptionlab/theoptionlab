@@ -147,9 +147,7 @@ class Combo(object):
         if ((lower_expiration_line == None) and (upper_expiration_line == None)): 
             return None  
         
-        # hack for strangle 
-        max_risk = lower_expiration_line
-#         max_risk = min(lower_expiration_line, upper_expiration_line)
+        max_risk = min(lower_expiration_line, upper_expiration_line)
         
         return max_risk
 
