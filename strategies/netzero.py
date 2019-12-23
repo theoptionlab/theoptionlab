@@ -2,9 +2,9 @@
 
 # results visualised on https://theoptionlab.com
 
-from util import util 
 import collections
 
+from util import util 
 
 parameters = collections.OrderedDict()
 parameters["cheap_entry"] = [None]
@@ -24,13 +24,9 @@ parameters["sl_exit"] = [None]
 parameters["delta"] = [None]
 
 
-
-
 class netzero(util.Strategy):
-    
 
     def makeCombo(self, current_date, expiration, position_size):
-        
         
         # 1x long put delta 20
         lowerlongstrike = self.connector.select_strike_by_delta(current_date, self.underlying, expiration, "p", -20)
@@ -55,8 +51,6 @@ class netzero(util.Strategy):
             
         combo = util.PutButterfly(upperlongposition, shortposition, lowerlongposition) 
         return combo 
-    
-
 
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
         

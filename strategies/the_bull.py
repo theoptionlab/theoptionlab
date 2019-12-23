@@ -3,8 +3,8 @@
 # results visualised on https://theoptionlab.com
 
 import collections
-from util import util
 
+from util import util
 
 parameters = collections.OrderedDict()
 parameters["cheap_entry"] = [None]
@@ -19,12 +19,12 @@ parameters["pct_exit"] = [None]
 parameters["dte_exit"] = [37]
 parameters["dit_exit"] = [None]
 parameters["deltatheta_exit"] = [None]
-parameters["tp_exit"] = [50,80, None]
-parameters["sl_exit"] = [200,400,None]
+parameters["tp_exit"] = [50, 80, None]
+parameters["sl_exit"] = [200, 400, None]
 parameters["delta"] = [None]
 
+
 class bull(util.Strategy): 
-    
 
     def makeCombo(self, current_date, expiration, position_size):
     
@@ -38,7 +38,6 @@ class bull(util.Strategy):
             else: entry_price = util.getEntryPrice(pcs) 
     
         return pcs 
-
     
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
         

@@ -2,10 +2,10 @@
 
 # results visualised on https://theoptionlab.com
 
-from util import util
-from util import expected_value
 import collections
 
+from util import expected_value
+from util import util
 
 parameters = collections.OrderedDict()
 parameters["cheap_entry"] = [None, 1.1]
@@ -49,7 +49,6 @@ class bf70(util.Strategy):
         combo = util.BWB(upperlongposition, None, shortposition, lowerlongposition)
         return combo
 
-
     def checkEntry(self, current_date):
 
         if (self.down_day_entry): 
@@ -58,7 +57,6 @@ class bf70(util.Strategy):
                 return False 
                 
         return True 
-    
     
     def checkCombo(self, combo):
         
@@ -69,7 +67,6 @@ class bf70(util.Strategy):
                 return False 
             
         return True 
-    
     
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
 

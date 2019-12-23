@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-from util import util
+
 from datetime import timedelta, datetime 
+
+from util import util
+
 
 def fly(strategy, risk_capital, entrydate, expiration): 
                 
@@ -16,7 +19,6 @@ def fly(strategy, risk_capital, entrydate, expiration):
     if strategy.patient_entry: 
         current_date = entrydate - timedelta(days=strategy.patient_days_before)
         max_date = entrydate + timedelta(days=strategy.patient_days_after)
-
     
     while (current_date <= max_date): 
                         
@@ -48,14 +50,13 @@ def fly(strategy, risk_capital, entrydate, expiration):
     if combo is None: 
         print("combo is None")
         return None 
-    
 
     # size up 
     max_risk = combo.getMaxRisk()
     if max_risk is None:
         return None 
     
-    position_size = int(risk_capital/abs(max_risk))
+    position_size = int(risk_capital / abs(max_risk))
         
     positions = combo.getPositions()
     for position in positions: 
@@ -64,7 +65,6 @@ def fly(strategy, risk_capital, entrydate, expiration):
     
     entry_date = current_date 
     entry_price = util.getEntryPrice(combo) 
-    
 
     strikes = ""
     for position in combo.getPositions(): 
@@ -87,16 +87,13 @@ def fly(strategy, risk_capital, entrydate, expiration):
         elif strategy.connector.check_holiday(strategy.underlying, current_date): 
             continue   
         
-        
         # adjust 
         dte = (expiration - current_date).days
         combo, realized_pnl, adjustment_counter = strategy.adjust(combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, adjustment_counter)
-        
 
         # exit 
         
         current_pnl = util.getCurrentPnL(strategy.connector, combo, current_date) + realized_pnl
-    
         
         if current_pnl is None: 
             print("current_pnl is None")
@@ -109,14 +106,12 @@ def fly(strategy, risk_capital, entrydate, expiration):
 
         dailypnls[current_date] = current_pnl - previouspnl
         previouspnl = current_pnl 
-        dit = (current_date - entry_date ).days
-        
+        dit = (current_date - entry_date).days
 
         if not flying: 
-            return {'exit': "stop", 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price/position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
-
+            return {'exit': "stop", 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price / position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
 
         exit_criterion = strategy.checkExit(combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size)
         if exit_criterion != None:
-            return {'exit': exit_criterion, 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price/position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
+            return {'exit': exit_criterion, 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price / position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
             
