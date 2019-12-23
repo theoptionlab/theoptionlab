@@ -1,13 +1,14 @@
 import calendar
+from datetime import timedelta 
+
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BMonthEnd
-from datetime import timedelta 
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
 
+
 def getNextEntry(connector, underlying, refDate, days, regular, eom):
-    
             
     running = True
     current_date = refDate
@@ -36,19 +37,16 @@ def getNextEntry(connector, underlying, refDate, days, regular, eom):
                     nextExpiration = third_saturday    
     
             dte = (nextExpiration - refDate).days
-            
  
             if dte >= days: 
                 running = False  
                 
             else: 
                 nextEntry['expiration'] = nextExpiration
-                
 
         current_date += relativedelta(months=1)
 
     return nextEntry 
-
 
 
 def getEntries(connector, underlying, start, end, days, regular, eom):
@@ -80,10 +78,9 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                 else: 
                     entry_regular['expiration'] = third_saturday 
     
-            entry_regular['entrydate'] = entry_regular['expiration']  - timedelta(days) 
+            entry_regular['entrydate'] = entry_regular['expiration'] - timedelta(days) 
             if entry_regular['entrydate'] >= start: 
                 entries.append(entry_regular)
-            
                           
             if entry_regular['entrydate'] >= end: 
                 running = False  

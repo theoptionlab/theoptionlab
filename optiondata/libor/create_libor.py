@@ -5,7 +5,7 @@ df_libor = pd.read_csv("LIBOR_USD.csv")
 cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
 df_libor.columns = cols
 df_libor['date'] = pd.to_datetime(df_libor['date'])
-df_libor.set_index('date',inplace=True)
+df_libor.set_index('date', inplace=True)
 cols_wo = ['ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
 df_libor[cols_wo] = df_libor[cols_wo].round(2)
 

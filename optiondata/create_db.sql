@@ -1,38 +1,3 @@
--- Table structure for table fullday
---
-
-DROP TABLE IF EXISTS fullday;
-CREATE TABLE fullday (
-    id integer NOT NULL,
-    underlying_symbol character varying(10) DEFAULT NULL::character varying,
-    quote_date date,
-    root character varying(10) DEFAULT NULL::character varying,
-    expiration date,
-    strike numeric(10,4) DEFAULT NULL::numeric,
-    option_type character(1) DEFAULT NULL::bpchar,
-    open numeric(10,4) DEFAULT NULL::numeric,
-    high numeric(10,4) DEFAULT NULL::numeric,
-    low numeric(10,4) DEFAULT NULL::numeric,
-    close numeric(10,4) DEFAULT NULL::numeric,
-    trade_volume integer,
-    bid_size_1545 integer,
-    bid_1545 numeric(20,4) DEFAULT NULL::numeric,
-    ask_size_1545 integer,
-    ask_1545 numeric(20,4) DEFAULT NULL::numeric,
-    underlying_bid_1545 numeric(10,4) DEFAULT NULL::numeric,
-    underlying_ask_1545 numeric(10,4) DEFAULT NULL::numeric,
-    bid_size_eod integer,
-    bid_eod numeric(20,4) DEFAULT NULL::numeric,
-    ask_size_eod integer,
-    ask_eod numeric(20,4) DEFAULT NULL::numeric,
-    underlying_bid_eod numeric(10,4) DEFAULT NULL::numeric,
-    underlying_ask_eod numeric(10,4) DEFAULT NULL::numeric,
-    vwap text,
-    open_interest integer,
-    delivery_code character varying(100) DEFAULT NULL::character varying
-);
-
-
 --
 -- Table structure for table optiondata
 --
@@ -75,16 +40,6 @@ CREATE TABLE optiondata (
   mid_1545 decimal(20,4) DEFAULT NULL,
   underlying_mid_1545 decimal(20,4) DEFAULT NULL
 ); 
-
-
-CREATE INDEX idx_ask_1545 ON fullday USING btree (ask_1545);
-CREATE INDEX idx_bid_1545 ON fullday USING btree (bid_1545);
-CREATE INDEX idx_fullday_expiration ON fullday USING btree (expiration);
-CREATE INDEX idx_option_type ON fullday USING btree (option_type);
-CREATE INDEX idx_quote_date ON fullday USING btree (quote_date);
-CREATE INDEX idx_strike ON fullday USING btree (strike);
-CREATE INDEX idx_underlying_symbol ON fullday USING btree (underlying_symbol);
-
 
 CREATE INDEX idx_date ON optiondata USING btree (quote_date);
 CREATE INDEX idx_expiration ON optiondata USING btree (expiration);

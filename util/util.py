@@ -1,26 +1,29 @@
 # -*- coding: utf-8 -*-
 import calendar
-import math
-import scipy.stats as st
-import workdays
-import pandas 
-from pandas.tseries.offsets import BMonthEnd
-from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
 from datetime import datetime, time, timedelta
-from py_vollib import black_scholes
-import zipfile 
-from private import settings
-import numpy as np 
-from scipy.interpolate import InterpolatedUnivariateSpline as interpol
+import math
 
-years = ([0.0, 1/360, 1/52, 1/12, 2/12, 3/12, 6/12, 12/12])
+
+import pandas 
+from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
+from pandas.tseries.offsets import BMonthEnd
+from py_vollib import black_scholes
+from scipy.interpolate import InterpolatedUnivariateSpline as interpol
+import workdays
+import zipfile 
+
+import numpy as np 
+from private import settings
+import scipy.stats as st
+
+years = ([0.0, 1 / 360, 1 / 52, 1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12])
 functions_dict = {}
 
 df_yields = pandas.read_csv(settings.path_to_libor_csv)
 cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
 df_yields.columns = cols
 df_yields['date'] = pandas.to_datetime(df_yields['date'])
-df_yields.set_index('date',inplace=True)
+df_yields.set_index('date', inplace=True)
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
@@ -88,7 +91,6 @@ class Strategy(object):
         self.tp_exit = tp_exit
         self.sl_exit = sl_exit
         self.delta = delta
-        
 
     def checkEntry(self, current_date):
         return True
@@ -209,6 +211,7 @@ class IronButterfly(Combo):
         positions.append(self.longputposition)
         return positions 
 
+
 class Condor(Combo):
     
     def __init__(self, pcs_longposition, pcs_shortposition, pds_shortposition, pds_longposition):
@@ -240,8 +243,6 @@ class BWB(PutButterfly):
         positions.append(self.lowerlongposition)
         return positions 
 
-        
-
 
 class Group(object):
     
@@ -254,7 +255,6 @@ class Group(object):
     
     def getCombos(self):
         return self.combos
-
 
 
 # probability that the price hits a barrier before expiry
@@ -307,17 +307,16 @@ def makePosition(connector, current_date, underlying, strike, expiration, option
     return position 
 
 
-
 def getCurrentPnLPosition(connector, position, current_date):
     
-    current_commissions = commissions * (abs(position.amount) * 2) # buy and sell
+    current_commissions = commissions * (abs(position.amount) * 2)  # buy and sell
     midprice = None 
     
     # if option is expired, compute theoretical midprice 
     if current_date >= position.option.expiration:
         current_date = position.option.expiration 
         midprice = bs_option_price(connector, position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
-        current_commissions = commissions * (abs(position.amount)) # expired, only commissions for entry
+        current_commissions = commissions * (abs(position.amount))  # expired, only commissions for entry
     
     while midprice is None: 
 
@@ -326,7 +325,6 @@ def getCurrentPnLPosition(connector, position, current_date):
         if midprice is None: 
             current_date = current_date - timedelta(1)
             continue 
-
 
     current_price = (midprice * position.amount)
     entry_price = (position.entry_price * position.amount)
@@ -414,6 +412,7 @@ def getVegaGroup(connector, group, current_date):
         
     return vega_sum 
 
+
 def getThetaGroup(connector, group, current_date):
 
     theta_sum = 0 
@@ -462,7 +461,7 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
     return deltatheta_exit
 
 
-def getLowerExpiration(combo, include_riskfree = True):
+def getLowerExpiration(combo, include_riskfree=True):
     
     lower_expiration_line = 0
     positions = combo.getPositions()
@@ -483,7 +482,7 @@ def getLowerExpiration(combo, include_riskfree = True):
     return lower_expiration_line
   
     
-def getUpperExpiration(combo, include_riskfree = True):
+def getUpperExpiration(combo, include_riskfree=True):
         
     upper_expiration_line = 0
     positions = combo.getPositions()
@@ -534,7 +533,7 @@ def getExpirationGroup(group):
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
 
 
-def getQuoteforMarbleOnTop(combo, current_date, include_riskfree = True): 
+def getQuoteforMarbleOnTop(combo, current_date, include_riskfree=True): 
     
     lowest = combo.lowerlongposition.option.strike  
     highest = combo.upperlongposition.option.strike  
@@ -569,7 +568,7 @@ def getQuoteforMarbleOnTop(combo, current_date, include_riskfree = True):
     return max_quote 
         
         
-def getLowerBreakpoint(combo, current_date, include_riskfree = True): 
+def getLowerBreakpoint(combo, current_date, include_riskfree=True): 
     
     lowest = combo.lowerlongposition.option.strike  
     highest = combo.upperlongposition.option.strike  
@@ -598,7 +597,7 @@ def getLowerBreakpoint(combo, current_date, include_riskfree = True):
         quote += 1
         
 
-def getLowerBreakpointGroup(group, current_date, include_riskfree = True): 
+def getLowerBreakpointGroup(group, current_date, include_riskfree=True): 
 
     lowest = group.getLowest().lowerlongposition.option.strike 
     highest = group.getHighest().upperlongposition.option.strike  
@@ -650,6 +649,7 @@ def getDownDay(connector, underlying, date, strategy):
     
     return down_day
 
+
 def selectStrikeByPrice(connector, price, underlying, date, expiration, option_type, divisor):
     
     results = connector.select_strikes_midprice(underlying, date, expiration, option_type, divisor)  
@@ -662,21 +662,19 @@ def selectStrikeByPrice(connector, price, underlying, date, expiration, option_t
     for row in results: 
         strike = row[0]
      
-        midprice  = float(row[1])
+        midprice = float(row[1])
         distance = abs(price - midprice)
-        
          
         if (midprice > price) and (distance < closest_distance): 
             closest_distance = distance
             closest_strike = strike 
             closest_midprice = midprice
-            
 
     return closest_strike, closest_midprice
 
 
 def myround(x, base=25):
-    return int(base * round(float(x)/base))
+    return int(base * round(float(x) / base))
 
 
 def testPCS(connector, short_strike, current_date, underlying, expiration, position_size, width): 
@@ -687,11 +685,11 @@ def testPCS(connector, short_strike, current_date, underlying, expiration, posit
 
     if shortposition is None or longposition is None: 
         return None 
-    pcs = PutCreditSpread(shortposition,longposition)
+    pcs = PutCreditSpread(shortposition, longposition)
     return pcs
 
 
-def bs_option_price(connector, underlying, expiration, option_type, strike, current_date, include_riskfree = True): 
+def bs_option_price(connector, underlying, expiration, option_type, strike, current_date, include_riskfree=True): 
     
     price = None 
     
@@ -733,7 +731,7 @@ def get_riskfree_libor(date, yte):
     else: 
         df = df_yields.query('index==@date')
         dr = df.iloc[0]
-        rates = ([0.0, dr['ON']/100, dr['w1']/100, dr['m1']/100, dr['m2']/100, dr['m3']/100, dr['m6']/100, dr['m12']/100])
+        rates = ([0.0, dr['ON'] / 100, dr['w1'] / 100, dr['m1'] / 100, dr['m2'] / 100, dr['m3'] / 100, dr['m6'] / 100, dr['m12'] / 100])
         
         df_inter = pandas.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
         df_inter.loc[0] = years

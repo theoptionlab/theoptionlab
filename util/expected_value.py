@@ -1,14 +1,16 @@
-from util import util 
-import math
 from datetime import datetime, time
+import math
+
 from py_vollib import black_scholes
 from py_vollib.black_scholes import implied_volatility
+
+from util import util 
 
 e_spanne = 3
 ratio = 100
 
 
-def getExpectedValue(connector, underlying, combo, current_date, expiration, use_precomputed = True, include_riskfree = True): 
+def getExpectedValue(connector, underlying, combo, current_date, expiration, use_precomputed=True, include_riskfree=True): 
 
     current_quote = connector.query_midprice_underlying(underlying, current_date)
     if  (current_quote == 0.0): 
@@ -51,17 +53,15 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration, use
             
         if (atm_iv == 0): atm_iv = 0.01
 
+    one_sd = (atm_iv / math.sqrt(util.yeartradingdays / (remaining_time_in_years * util.yeartradingdays))) * current_quote
 
-    one_sd = (atm_iv / math.sqrt(util.yeartradingdays/(remaining_time_in_years * util.yeartradingdays))) * current_quote
+    lower_ul = current_quote - e_spanne * one_sd
+    upper_ul = current_quote + e_spanne * one_sd
+    step = (upper_ul - lower_ul) / 24  # war 1000
 
-    lower_ul = current_quote-e_spanne*one_sd
-    upper_ul = current_quote+e_spanne*one_sd
-    step = (upper_ul - lower_ul) / 24 # war 1000
-    
-
-    for i in range(25): # war 1001
+    for i in range(25):  # war 1001
         
-        ul_for_ew.insert(i, lower_ul + (i*step))
+        ul_for_ew.insert(i, lower_ul + (i * step))
         
         sum_legs_i = 0 
         positions = combo.getPositions()
@@ -78,14 +78,13 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration, use
             guv = (value - position.entry_price) * ratio * position.amount 
             sum_legs_i += guv
             
-            
         sum_legs.insert(i, sum_legs_i)
         
         prob = util.prob_hit(current_quote, ul_for_ew[i], remaining_time_in_years, 0, atm_iv)
         prob_touch.insert(i, prob)    
     
-    sumproduct = sum([a*b for a,b in zip(sum_legs,prob_touch)])
-    expected_value = round((sumproduct / sum(prob_touch)),2)
+    sumproduct = sum([a * b for a, b in zip(sum_legs, prob_touch)])
+    expected_value = round((sumproduct / sum(prob_touch)), 2)
     return expected_value
 
 
