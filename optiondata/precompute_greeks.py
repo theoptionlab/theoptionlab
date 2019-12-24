@@ -14,21 +14,18 @@ def precompute(table, date, underlying, include_riskfree):
     
     start = time.time()
         
-    print("precompute: " + str(underlying))
-    print()
-    
-        
     db = psycopg2.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
     cur2 = db.cursor()
     
-    print ("Query for items to precompute ")
     if (underlying == "*"): 
         query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE quote_date = '" + str(date) + "'" 
-    else: 
-        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(date) + "'" 
+    else: # OR delta != NULL OR theta != NULL OR vega != NULL
+        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(date) + "' AND iv IS NULL" 
     
     cur2.execute(query)
     result = cur2.fetchall()
+    
+    print (str(date) + " " + str(underlying) + ": " + str(len(result)) + " results")
     
     bulkrows = []
     for row in result:
@@ -66,6 +63,7 @@ def precompute(table, date, underlying, include_riskfree):
     psycopg2.extras.execute_batch(cur2, """UPDATE """ + table + """ SET iv=%(iv)s, delta=%(delta)s, theta=%(theta)s, vega=%(vega)s WHERE id=%(rowid)s""", bulkrows, page_size=100)
         # cur2.executemany("""UPDATE """ + table + """ SET iv=%(iv)s, delta=%(delta)s, theta=%(theta)s, vega=%(vega)s WHERE id=%(rowid)s""", bulkrows)
     db.commit()
+    print ("committed")
         
 #     except Exception as e: 
 #         print("an exception occurred")

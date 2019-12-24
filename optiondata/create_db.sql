@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS optiondata;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE optiondata (
+  id SERIAL PRIMARY KEY NOT NULL,
   underlying_symbol varchar(10) DEFAULT NULL,
   quote_date date DEFAULT NULL,
   root varchar(10) DEFAULT NULL,
@@ -32,7 +33,6 @@ CREATE TABLE optiondata (
   vwap text,
   open_interest integer DEFAULT NULL,
   delivery_code varchar(100) DEFAULT NULL,
-  id SERIAL PRIMARY KEY NOT NULL,
   iv decimal(65,30) DEFAULT NULL,
   delta decimal(65,30) DEFAULT NULL,
   theta decimal(65,30) DEFAULT NULL,
