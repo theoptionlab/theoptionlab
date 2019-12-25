@@ -99,10 +99,10 @@ def fly(strategy, risk_capital, entrydate, expiration):
             print("current_pnl is None")
             return None 
 
-#         if current_pnl < (max_risk): 
-#             print "not possible: current_pnl < (max_risk)"
-#             print current_pnl
-#             continue 
+        if current_pnl < (max_risk): 
+            print ("not possible: current_pnl < (max_risk)")
+            print (current_pnl)
+            continue 
 
         dailypnls[current_date] = current_pnl - previouspnl
         previouspnl = current_pnl 

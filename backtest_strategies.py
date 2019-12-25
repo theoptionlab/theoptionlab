@@ -126,7 +126,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         running_max_dd_date = datetime(2000, 1, 1).date()
 
         single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, dte_entry, True, False)
-              
+        
         for e in range(len(single_entries)): 
             
             entry = single_entries[e]

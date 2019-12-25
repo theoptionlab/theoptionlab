@@ -9,11 +9,11 @@ from datetime import timedelta, datetime
 # insert_data.insert(symbols)
 
 
-start = datetime(2019, 10, 20).date()
+start = datetime(2004, 1, 1).date()
 max_date = datetime(2019, 12, 20).date()
 current_date = start
 
 while (current_date <= max_date): 
     current_date = current_date + timedelta(days=1)
-    precompute_greeks.precompute("optiondata", current_date, "^RUT", True)
+    precompute_greeks.precompute("optiondata", current_date, "*", True)
     

@@ -18,7 +18,7 @@ def precompute(table, date, underlying, include_riskfree):
     cur2 = db.cursor()
     
     if (underlying == "*"): 
-        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE quote_date = '" + str(date) + "'" 
+        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE quote_date = '" + str(date) + "' AND iv IS NULL" 
     else: # OR delta != NULL OR theta != NULL OR vega != NULL
         query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(date) + "' AND iv IS NULL" 
     
@@ -63,7 +63,6 @@ def precompute(table, date, underlying, include_riskfree):
     psycopg2.extras.execute_batch(cur2, """UPDATE """ + table + """ SET iv=%(iv)s, delta=%(delta)s, theta=%(theta)s, vega=%(vega)s WHERE id=%(rowid)s""", bulkrows, page_size=100)
         # cur2.executemany("""UPDATE """ + table + """ SET iv=%(iv)s, delta=%(delta)s, theta=%(theta)s, vega=%(vega)s WHERE id=%(rowid)s""", bulkrows)
     db.commit()
-    print ("committed")
         
 #     except Exception as e: 
 #         print("an exception occurred")
@@ -71,8 +70,6 @@ def precompute(table, date, underlying, include_riskfree):
 
     end = time.time() 
     print (end - start)
-    print ("Done precomputing")
-    
     print ()
                 
     db.close()

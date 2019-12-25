@@ -1,4 +1,4 @@
-import pgdb
+import psycopg2
 
 from private import settings
 
@@ -8,7 +8,7 @@ class MyDB(object):
     _db_cur = None
 
     def __init__(self):
-        self._db_connection = pgdb.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
+        self._db_connection = psycopg2.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
         self._db_cur = self._db_connection.cursor()
 
     def query(self, query):

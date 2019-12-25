@@ -729,16 +729,23 @@ def get_riskfree_libor(date, yte):
         f = functions_dict[date]
 
     else: 
-        df = df_yields.query('index==@date')
-        dr = df.iloc[0]
-        rates = ([0.0, dr['ON'] / 100, dr['w1'] / 100, dr['m1'] / 100, dr['m2'] / 100, dr['m3'] / 100, dr['m6'] / 100, dr['m12'] / 100])
-        
-        df_inter = pandas.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
-        df_inter.loc[0] = years
-        df_inter.loc[1] = rates
-        df_inter = df_inter.dropna(axis='columns')
-        f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
-        functions_dict[date] = f 
+        try: 
+            df = df_yields.query('index==@date')
+            dr = df.iloc[0]
+            rates = ([0.0, dr['ON'] / 100, dr['w1'] / 100, dr['m1'] / 100, dr['m2'] / 100, dr['m3'] / 100, dr['m6'] / 100, dr['m12'] / 100])
+            
+            df_inter = pandas.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+            df_inter.loc[0] = years
+            df_inter.loc[1] = rates
+            df_inter = df_inter.dropna(axis='columns')
+            f = interpol(df_inter.loc[0], df_inter.loc[1], k=1, bbox=[0.0, 4.0])
+            functions_dict[date] = f 
+            
+        except: 
+            print (str(date))
+            functions_dict[date] = 0 
+            f = functions_dict[date]
+    
         
     y = float(yte)
     rf = f(y) / 100

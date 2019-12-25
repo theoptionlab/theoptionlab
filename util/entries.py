@@ -79,7 +79,7 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                     entry_regular['expiration'] = third_saturday 
     
             entry_regular['entrydate'] = entry_regular['expiration'] - timedelta(days) 
-            if entry_regular['entrydate'] >= start: 
+            if (entry_regular['entrydate'] >= start) and (entry_regular['expiration'] <= end): 
                 entries.append(entry_regular)
                           
             if entry_regular['entrydate'] >= end: 
@@ -103,8 +103,11 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                     entry_eom['expiration'] = day_before
                     entry_eom['entrydate'] = day_before - timedelta(days) 
             
-            if entry_eom['entrydate'] >= start: 
+            if (entry_regular['entrydate'] >= start) and (last_day <= end): 
                 entries.append(entry_eom)
+                
+            if entry_regular['entrydate'] >= end: 
+                running = False  
 
         current_date += relativedelta(months=1)
 
