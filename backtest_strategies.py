@@ -265,13 +265,13 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         print ("Successfully created the directory %s " % path)
         
     df_table = pd.DataFrame(data=results_table, index=["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
-    df_table.to_html(path + "/" + strategy.name + "_results_table.html")
+    df_table.to_html(path + "/results_table.html")
         
     df_curve = pd.DataFrame(data=equity_curve, index=["strategy", "date", "pnl"]).T
-    df_curve.to_csv(path + "/" + strategy.name + "_results.csv")
+    df_curve.to_csv(path + "/results.csv")
     
     df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "strikes", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
-    df_log.to_csv(path + "/" + strategy.name + "_single_results.csv")
+    df_log.to_csv(path + "/single_results.csv")
 
     print(df_table)
     

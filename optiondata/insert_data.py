@@ -9,7 +9,7 @@ from util import util
 pd.options.mode.chained_assignment = None
 
 
-def insert(underlyings):
+def insert(underlyings, dir):
     
     print("insert: " + str(underlyings)) 
     print()
@@ -24,7 +24,7 @@ def insert(underlyings):
 
     
     # traverse root directory, and list directories as dirs and files as files
-    for root, dirs, files in os.walk(settings.data_directory):
+    for root, dirs, files in os.walk(dir):
 #         path = root.split(os.sep)
 #         print((len(path) - 1) * '---', os.path.basename(root))
         for file in files:

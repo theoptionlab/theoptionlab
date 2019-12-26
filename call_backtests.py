@@ -13,7 +13,7 @@ printalot = True
 
 start = datetime(2006, 11, 1).date()
 # start = datetime(2010, 6, 1).date() # vxx options since: 2010-05-28  
-end = datetime(2019, 12, 20).date()
+end = datetime(2019, 12, 24).date()
 # end = datetime.now().date()
 
 connector = postgresql_connector.MyDB()
