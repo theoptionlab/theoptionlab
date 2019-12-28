@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<title>Backtest Results</title>
+<link href="../../assets/css/style.css" rel="stylesheet" />
+<link href="../../assets/color/default.css" rel="stylesheet" />
+<link href="../../style.css" rel="stylesheet" />
+<script src="../../js/includehtml.js" type="text/javascript"></script>
+</head>
+
+<body>
+
+	<a href="../../index.html">back</a>
+
+	<div w3-include-html="strategy.html"></div>
+
+	<div id="chart"></div>
+
+	<br>
+
+	<div w3-include-html="results_table.html"></div>
+
+	<br />
+	
+	
+	<p><a href="single_results.csv">Download single results</a><br />
+	<a href="results.csv">Download equity curve</a>
+	</p>
+
+	<br />
+	
+	<div w3-include-html="../explanations.html"></div>
+
+	<!-- load the d3.js library -->
+	<script src="../../js/d3.v4.min.js" type="text/javascript"></script>
+	<script src="d3.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+		includeHTML();
+	</script>
+
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async
+		src="https://www.googletagmanager.com/gtag/js?id=UA-111804046-1"
+		type="text/javascript"></script>
+	<script type="text/javascript">
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+			dataLayer.push(arguments);
+		}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-111804046-1');
+	</script>
+
+
+</body>
