@@ -21,20 +21,14 @@ def insert(underlyings, dir):
     cur2 = db.cursor()
             
     counter = 0 
+    dates = []
 
     
     # traverse root directory, and list directories as dirs and files as files
     for root, dirs, files in os.walk(dir):
-#         path = root.split(os.sep)
-#         print((len(path) - 1) * '---', os.path.basename(root))
+        
         for file in files:
-#             print(len(path) * '---', file)
-#         
-# 
-#     onlyfiles = [f for f in listdir(settings.data_directory) if isfile(join(settings.path_to_data_directory, f))]
-#     for datafile in onlyfiles: 
-# #         print (datafile)
-
+            
             if file.endswith(".zip"): 
     
                 index = file.index('_') + 1
@@ -49,11 +43,12 @@ def insert(underlyings, dir):
                     
                     if (row[0] == 0):
                         
+                        dates.append(datestring)
+                        
                         counter += 1
                         print (str(counter) + "\t" + datestring + "\t" + underlying + "\t" + str(file)) 
                                             
                         if unzippedpath == "":
-#                             print (root)
                             datafilepath = root + "/" + file
                             unzippedpath = util.unzip(datafilepath)
                         
@@ -80,4 +75,5 @@ def insert(underlyings, dir):
     print ()
     
     db.close()
+    return dates
     

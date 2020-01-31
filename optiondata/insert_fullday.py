@@ -9,7 +9,7 @@ from datetime import datetime
 
 def insert(date):
     start = time.time()
-    datafilepath = settings.path_to_data_directory + "UnderlyingOptionsEODQuotes_" + str(date) + ".zip"
+    datafilepath = settings.data_dir + "UnderlyingOptionsEODQuotes_" + str(date) + ".zip"
     unzippedpath = util.unzip(datafilepath)
     
     db = psycopg2.connect("host=localhost dbname=optiondata user=" + settings.db_username)
@@ -59,5 +59,5 @@ def insert(date):
     print (end - start)
     db.close()
 
-date = datetime(2019, 12, 20).date()
+date = datetime(2020, 1, 30).date()
 insert(date)
