@@ -4,11 +4,12 @@ from optiondata import precompute_greeks
 from datetime import timedelta, datetime 
 from private import download_data
 
-# download_data.download(settings.data_dir) 
+download_data.download(settings.data_dir) 
 
-# symbols = ["^RUT", "^SPX", "SPHB"]
-symbols = ["^VIX"]
-# VIX und SLPV
+
+symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB"]
+
+
 
 # insert all data from the directory specified in the path. 
 dates = insert_data.insert(symbols, settings.data_dir)

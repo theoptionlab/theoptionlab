@@ -17,10 +17,16 @@ def precompute(table, date, underlying, include_riskfree):
     db = psycopg2.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
     cur2 = db.cursor()
     
-    if (underlying == "*"): 
-        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE quote_date = '" + str(date) + "' AND iv IS NULL" 
-    else: # OR delta != NULL OR theta != NULL OR vega != NULL
-        query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(date) + "' AND iv IS NULL" 
+    underlying_fragment = ""
+    if (underlying != "*"): 
+        underlying_fragment = "underlying_symbol = '" + underlying + "' AND "
+        
+    date_fragment = ""
+    if (date != "*"): 
+        date_fragment = "quote_date = '" + str(date) + "' AND "
+        
+    query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE " + underlying_fragment + date_fragment + "iv IS NULL" 
+    
     
     cur2.execute(query)
     result = cur2.fetchall()
@@ -73,3 +79,6 @@ def precompute(table, date, underlying, include_riskfree):
     print ()
                 
     db.close()
+    
+# precompute("optiondata", "*", "*", True)
+
