@@ -4,8 +4,9 @@ from util import util
 from datetime import datetime 
 from private import settings
 
-date = "2019-12-20"
+date = "2020-04-13"
 print (date)
+print ()
 
 
 counter = 0
@@ -29,7 +30,7 @@ for row in cur1.fetchall():
     remaining_time = util.remaining_time(datetime.strptime(str(date), "%Y-%m-%d").date(), datetime.strptime(str(expiration), "%Y-%m-%d"))
     per_annum = round((percentage / remaining_time), 2)
     
-    if per_annum > 2.5:
+    if per_annum > 1:
         counter += 1
         print("counter: " + str(counter))
         print("underlying: " + str(underlying)) 

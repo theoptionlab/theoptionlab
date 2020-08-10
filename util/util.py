@@ -312,7 +312,7 @@ def getCurrentPnLPosition(connector, position, current_date):
     current_commissions = commissions * (abs(position.amount) * 2)  # buy and sell
     midprice = None 
     
-    # if option is expired, compute theoretical midprice 
+    # if option is expired, compute theoretical price 
     if current_date >= position.option.expiration:
         current_date = position.option.expiration 
         midprice = bs_option_price(connector, position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)

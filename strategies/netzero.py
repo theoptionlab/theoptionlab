@@ -62,7 +62,6 @@ class netzero(util.Strategy):
             short_upperexit = -40 + shortdifference  
             
             current_shortdelta = self.connector.select_delta(current_date, self.underlying, expiration, combo.shortposition.option.type, combo.shortposition.option.strike)
-
             if (current_shortdelta > short_lowerexit) or (current_shortdelta < short_upperexit): 
                 return "sdc"
 
