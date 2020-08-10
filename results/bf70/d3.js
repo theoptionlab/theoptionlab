@@ -1,6 +1,6 @@
 // Set the dimensions of the canvas / graph
 var margin = {top: 30, right: 20, bottom: 70, left: 70},
-    width = 1400 - margin.left - margin.right,
+    width = 1300 - margin.left - margin.right,
     height = 700 - margin.top - margin.bottom;
 
 // Parse the date / time
