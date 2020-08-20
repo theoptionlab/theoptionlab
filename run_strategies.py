@@ -93,7 +93,7 @@ def fly(strategy, risk_capital, entrydate, expiration):
 
         # exit 
         
-        current_pnl = util.getCurrentPnL(strategy.connector, combo, current_date) + realized_pnl
+        current_pnl = util.getCurrentPnLCombo(strategy.connector, combo, current_date) + realized_pnl
         
         if current_pnl is None: 
             print("current_pnl is None")
@@ -101,7 +101,6 @@ def fly(strategy, risk_capital, entrydate, expiration):
 
         if current_pnl < (max_risk): 
             print ("not possible: current_pnl < (max_risk)")
-            print (current_pnl)
             continue 
 
         dailypnls[current_date] = current_pnl - previouspnl
