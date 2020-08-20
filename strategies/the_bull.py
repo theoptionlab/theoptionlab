@@ -40,10 +40,11 @@ class bull(util.Strategy):
         return pcs 
     
     def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
-        
+    
+
         if dte < self.dte_exit: 
             return "dte"
-    
+        
         # Stop Loss: x% of the credit received 
         if (self.sl_exit is not None):
             sl = (entry_price * self.sl_exit)
@@ -51,6 +52,7 @@ class bull(util.Strategy):
                 return "sl"
         
         # Take Profit
+        # ratio sits in the tp_exit => could be nicer ss
         if (self.tp_exit is not None): 
             tp = (-entry_price * self.tp_exit)
             if current_pnl >= tp:
