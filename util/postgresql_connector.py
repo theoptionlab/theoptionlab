@@ -41,8 +41,11 @@ class MyDB(object):
         strike = row[0]
         return strike 
     
-    def select_expiration(self, quote_date, underlying_symbol, option_type, days): 
-        query = "SELECT DISTINCT expiration, ABS(DATE_PART('day', expiration - " + str(quote_date) + ") - 90) AS difference FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND option_type = '" + option_type + "' AND expiration >= '" + str(quote_date) + "'::date AND expiration <= ('" + str(quote_date) + "'::date + interval '" + str(days + 50) + " days')" + " AND expiration >= ('" + str(quote_date) + "'::date + interval '" + str(days - 50) + " days') ORDER BY difference ASC LIMIT 1;"
+    def select_expiration(self, quote_date, underlying_symbol, option_type, days):
+        if days < 0: 
+            return None         
+        query = "SELECT DISTINCT expiration, ABS((DATE_PART('day', expiration) - DATE_PART('day', quote_date)) - " + str(days) + ") AS difference FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND option_type = '" + option_type + "' AND expiration >= '" + str(quote_date) + "'::date AND expiration <= ('" + str(quote_date) + "'::date + interval '" + str(days + 50) + " days')" + " AND expiration >= ('" + str(quote_date) + "'::date + interval '" + str(days - 50) + " days') ORDER BY difference ASC LIMIT 1;"
+#         print (query)
         self.query(query)
         row = self._db_cur.fetchone()
         if row == None:
@@ -54,9 +57,12 @@ class MyDB(object):
         query = "SELECT iv FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "' AND option_type = '" + option_type + "' AND strike = '" + str(strike) + "'"
         self.query(query)
         row = self._db_cur.fetchone()
-        if row is None: return None 
+        if row is None: 
+            print (query)
+            return None 
         iv = row[0]
         return float(iv) 
+    
        
     def select_delta(self, quote_date, underlying_symbol, expiration, option_type, strike):
         query = "SELECT delta FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "' AND option_type = '" + option_type + "' AND strike = '" + str(strike) + "'"
@@ -79,6 +85,7 @@ class MyDB(object):
         query = "SELECT theta FROM optiondata WHERE underlying_symbol = '" + option.underlying + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(option.expiration) + "' AND option_type = '" + option.type + "' AND strike = '" + str(option.strike) + "'"
         self.query(query)
         row = self._db_cur.fetchone()
+        if row == None: return None 
         theta = row[0]
         return theta 
 
