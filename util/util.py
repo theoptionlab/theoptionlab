@@ -153,7 +153,14 @@ class Combo(object):
         
         return max_risk
 
+    def append(self, position):
+        self.positions.append(position)
 
+    def close_position(self, connector, position, current_date):
+        if position in self.positions:
+            self.positions.remove(position) 
+        return getCurrentPnLCombo(connector, self, current_date)
+    
 class PutButterfly(Combo):
     
     def __init__(self, upperlongposition, shortposition, lowerlongposition):
@@ -332,7 +339,7 @@ def getCurrentPnLPosition(connector, position, current_date):
     return currentpnl
 
 
-def getCurrentPnL(connector, combo, current_date):
+def getCurrentPnLCombo(connector, combo, current_date):
     currentpnl = 0       
     positions = combo.getPositions()
     for position in positions: 
