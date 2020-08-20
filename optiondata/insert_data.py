@@ -11,11 +11,13 @@ from datetime import datetime
 
 
 startdates = {
+    
   "^RUT": datetime(2004, 1, 2).date(),
   "^SPX": datetime(2004, 1, 2).date(),
   "^VIX": datetime(2006, 2, 27).date(),
   "SPLV": datetime(2011, 11, 1).date(), 
-  "SPHB": datetime(2013, 7, 24).date()
+  "SPHB": datetime(2013, 7, 24).date(),
+  "PEP": datetime(2004, 1, 2).date()
 }
 
 
@@ -51,7 +53,7 @@ def insert(underlyings, dir):
                 
                 for underlying in underlyings: 
                     
-                    if date > startdates[underlying]: 
+                    if ((underlying in startdates) and (date > startdates[underlying])) or (underlying not in startdates): 
                                                     
                         query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE quote_date = '" + datestring + "' AND underlying_symbol = '" + underlying + "')"
                         cur2.execute(query)
