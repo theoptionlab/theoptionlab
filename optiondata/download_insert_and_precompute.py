@@ -9,8 +9,8 @@ from private import download_data
 download_data.download(settings.data_dir) 
 
 
-symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB"]
-
+symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB", "PEP", "PFE", "INTC"]
+# symbols = ["PFE", "INTC"]
 
 # insert all data from the directory specified in the path. 
 dates = insert_data.insert(symbols, settings.data_dir)
@@ -19,3 +19,4 @@ print (dates)
 for date in dates: 
     precompute_bs_price.precompute("optiondata", date, "*", True)
     precompute_greeks.precompute("optiondata", date, "*", True)
+
