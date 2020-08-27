@@ -26,6 +26,7 @@ class MyDB(object):
     def select_strike_by_delta(self, quote_date, underlying_symbol, expiration, option_type, indelta, divisor=1): 
         query = "SELECT strike, delta FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "' AND option_type = '" + option_type + "' AND strike % " + str(divisor) + " = 0 ORDER BY ABS(delta - " + str(indelta) + ") LIMIT 1;"
         self.query(query)
+#         print (query)
         row = self._db_cur.fetchone()
         if row == None:
             return None
@@ -43,8 +44,8 @@ class MyDB(object):
     
     def select_expiration(self, quote_date, underlying_symbol, option_type, days):
         if days < 0: 
-            return None         
-        query = "SELECT DISTINCT expiration, ABS((DATE_PART('day', expiration) - DATE_PART('day', quote_date)) - " + str(days) + ") AS difference FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND option_type = '" + option_type + "' AND expiration >= '" + str(quote_date) + "'::date AND expiration <= ('" + str(quote_date) + "'::date + interval '" + str(days + 50) + " days')" + " AND expiration >= ('" + str(quote_date) + "'::date + interval '" + str(days - 50) + " days') ORDER BY difference ASC LIMIT 1;"
+            return None
+        query = "SELECT DISTINCT expiration, ABS((expiration - quote_date) - " + str(days) + ") AS difference FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date = '" + str(quote_date) + "' AND option_type = '" + option_type + "' AND expiration >= '" + str(quote_date) + "'::date AND expiration <= ('" + str(quote_date) + "'::date + interval '" + str(days + 50) + " days')" + " AND expiration >= ('" + str(quote_date) + "'::date + interval '" + str(days - 50) + " days') ORDER BY difference ASC LIMIT 1;"
 #         print (query)
         self.query(query)
         row = self._db_cur.fetchone()
