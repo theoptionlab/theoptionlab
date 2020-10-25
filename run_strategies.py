@@ -6,7 +6,7 @@ from datetime import timedelta, datetime
 from util import util
 
 
-def fly(strategy, risk_capital, entrydate, expiration): 
+def fly(strategy, underlying, risk_capital, entrydate, expiration): 
                 
     flying = True 
     dailypnls = {}
@@ -24,22 +24,22 @@ def fly(strategy, risk_capital, entrydate, expiration):
                         
         combo = None
         
-        while (strategy.connector.check_holiday(strategy.underlying, current_date) == True): 
+        while (util.connector.check_holiday(underlying, current_date) == True): 
             current_date = current_date + timedelta(days=1)
             if (current_date >= expiration) or (current_date >= datetime.now().date()): 
                 return None 
             
-        if not strategy.checkEntry(current_date): 
+        if not strategy.checkEntry(underlying, current_date): 
             current_date = current_date + timedelta(days=1)
             continue 
 
-        combo = strategy.makeCombo(current_date, expiration, 1)
+        combo = strategy.makeCombo(underlying, current_date, expiration, 1)
         
         if combo is None: 
             current_date = current_date + timedelta(days=1)
             continue
         
-        if strategy.checkCombo(combo): 
+        if strategy.checkCombo(underlying, combo): 
             break 
         
         else:
@@ -84,16 +84,16 @@ def fly(strategy, risk_capital, entrydate, expiration):
         if (current_date >= expiration) or (current_date >= datetime.now().date()): 
             flying = False 
             
-        elif strategy.connector.check_holiday(strategy.underlying, current_date): 
+        elif util.connector.check_holiday(underlying, current_date): 
             continue   
         
         # adjust 
         dte = (expiration - current_date).days
-        combo, realized_pnl, adjustment_counter = strategy.adjust(combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, adjustment_counter)
+        combo, realized_pnl, adjustment_counter = strategy.adjust(underlying, combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, adjustment_counter)
 
         # exit 
         
-        current_pnl = util.getCurrentPnLCombo(strategy.connector, combo, current_date) + realized_pnl
+        current_pnl = util.getCurrentPnLCombo(combo, current_date) + realized_pnl
         
         if current_pnl is None: 
             print("current_pnl is None")
@@ -110,7 +110,7 @@ def fly(strategy, risk_capital, entrydate, expiration):
         if not flying: 
             return {'exit': "stop", 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price / position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
 
-        exit_criterion = strategy.checkExit(combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size)
+        exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size)
         if exit_criterion != None:
             return {'exit': exit_criterion, 'entry_date': entry_date, 'strikes': strikes, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': entry_price / position_size, 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
             

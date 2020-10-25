@@ -3,7 +3,7 @@ import calendar
 from datetime import datetime, time, timedelta
 import math
 
-
+from util import postgresql_connector 
 import pandas 
 from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
 from pandas.tseries.offsets import BMonthEnd
@@ -34,6 +34,7 @@ lower_ul = 1
 upper_ul = 1000000
 dividend = 0
 commissions = 1.25
+connector = postgresql_connector.MyDB()
 
 interest = 0.0225
 yeartradingdays = 252
@@ -51,11 +52,8 @@ holidays = cal1.holidays(start=dr.min(), end=dr.max()).date
 
 class Strategy(object): 
     
-    def __init__(self, connector, name, underlying, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
+    def __init__(self, patient_days_before = 0, patient_days_after = 0, cheap_entry = None, down_day_entry = None, patient_entry = None, min_vix_entry = None, max_vix_entry = None, dte_entry = None, els_entry = None, ew_exit = None, pct_exit = None, dte_exit = None, dit_exit = None, deltatheta_exit = None, tp_exit = None, sl_exit = None, delta = None):
         
-        self.connector = connector 
-        self.name = name 
-        self.underlying = underlying 
         self.patient_days_before = patient_days_before 
         self.patient_days_after = patient_days_after 
         self.cheap_entry = cheap_entry 
@@ -74,8 +72,10 @@ class Strategy(object):
         self.sl_exit = sl_exit
         self.delta = delta
 
-    def setParameters(self, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
+    def setParameters(self, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
         
+        self.patient_days_before = patient_days_before 
+        self.patient_days_after = patient_days_after 
         self.cheap_entry = cheap_entry 
         self.down_day_entry = down_day_entry
         self.patient_entry = patient_entry
@@ -92,13 +92,13 @@ class Strategy(object):
         self.sl_exit = sl_exit
         self.delta = delta
 
-    def checkEntry(self, current_date):
+    def checkEntry(self, underlying, current_date):
         return True
     
-    def checkCombo(self, combo):
+    def checkCombo(self, underlying, combo):
         return True 
     
-    def adjust(self, combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, rh):
+    def adjust(self, underying, combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, rh):
         return combo, realized_pnl, rh
     
     def checkExit(self):
@@ -107,7 +107,7 @@ class Strategy(object):
       
 class Option():
 
-    def __init__(self, connector, entry_date, underlying, strike, expiration, sort):
+    def __init__(self, entry_date, underlying, strike, expiration, sort):
         
         result = connector.check_option(underlying, strike, entry_date, expiration) 
             
@@ -156,24 +156,21 @@ class Combo(object):
     def append(self, position):
         self.positions.append(position)
 
-    def close_position(self, connector, position, current_date):
+    def close_position(self, position):
         if position in self.positions:
             self.positions.remove(position) 
-        return getCurrentPnLCombo(connector, self, current_date)
+
     
 class PutButterfly(Combo):
-    
+
     def __init__(self, upperlongposition, shortposition, lowerlongposition):
         self.upperlongposition = upperlongposition
         self.shortposition = shortposition
         self.lowerlongposition = lowerlongposition
+        self.positions = self.upperlongposition, self.shortposition, self.lowerlongposition 
         
-    def getPositions(self):
-        positions = [] 
-        positions.append(self.upperlongposition)
-        positions.append(self.shortposition)
-        positions.append(self.lowerlongposition)
-        return positions 
+#     def getPositions(self):
+#         return self.positions 
 
 
 class PutCreditSpread(Combo):
@@ -181,12 +178,10 @@ class PutCreditSpread(Combo):
     def __init__(self, shortposition, longposition):
         self.shortposition = shortposition
         self.longposition = longposition
+        self.positions = self.shortposition, self.longposition 
         
-    def getPositions(self):
-        positions = [] 
-        positions.append(self.shortposition)
-        positions.append(self.longposition)
-        return positions  
+#     def getPositions(self):
+#         return self.positions
 
 
 class Strangle(Combo):
@@ -194,12 +189,10 @@ class Strangle(Combo):
     def __init__(self, putposition, callposition):
         self.putposition = putposition
         self.callposition = callposition
+        self.positions = self.putposition, self.callposition 
         
-    def getPositions(self):
-        positions = [] 
-        positions.append(self.putposition)
-        positions.append(self.callposition)
-        return positions  
+#     def getPositions(self):
+#         return self.positions
     
     
 class IronButterfly(Combo):
@@ -209,14 +202,10 @@ class IronButterfly(Combo):
         self.shortcallposition = shortcallposition
         self.shortputposition = shortputposition
         self.longputposition = longputposition
+        self.positions = self.longcallposition, self.shortcallposition, self.shortputposition, self.longputposition
         
-    def getPositions(self):
-        positions = [] 
-        positions.append(self.longcallposition)
-        positions.append(self.shortcallposition)
-        positions.append(self.shortputposition)
-        positions.append(self.longputposition)
-        return positions 
+#     def getPositions(self):
+#         return self.positions
 
 
 class Condor(Combo):
@@ -226,14 +215,10 @@ class Condor(Combo):
         self.pcs_shortposition = pcs_shortposition
         self.pds_shortposition = pds_shortposition
         self.pds_longposition = pds_longposition
+        self.positions = self.pcs_longposition, self.pcs_shortposition, self.pds_shortposition, self.pds_longposition
         
-    def getPositions(self):
-        positions = [] 
-        positions.append(self.pcs_longposition)
-        positions.append(self.pcs_shortposition)
-        positions.append(self.pds_shortposition)
-        positions.append(self.pds_longposition)
-        return positions  
+#     def getPositions(self):
+#         return self.positions
     
     
 class BWB(PutButterfly):
@@ -241,7 +226,8 @@ class BWB(PutButterfly):
     def __init__(self, upperlongposition, rolledlongposition, cs_shortposition, lowerlongposition):
         super(BWB, self).__init__(upperlongposition, cs_shortposition, lowerlongposition)
         self.rolledlongposition = rolledlongposition
-
+        
+    # todo 
     def getPositions(self):
         positions = [] 
         positions.append(self.upperlongposition)
@@ -259,7 +245,11 @@ class Group(object):
         
     def append(self, combo):
         self.combos.append(combo)
-    
+        
+    def close_combo(self, combo):
+        if combo in self.combos:
+            self.combos.remove(combo) 
+
     def getCombos(self):
         return self.combos
 
@@ -305,8 +295,8 @@ def remaining_time(reference, expiration):
     return remaining_time_in_years
     
 
-def makePosition(connector, current_date, underlying, strike, expiration, optiontype, position_size):
-    try: option = Option(connector, current_date, underlying, strike, expiration, optiontype)
+def makePosition(current_date, underlying, strike, expiration, optiontype, position_size):
+    try: option = Option(current_date, underlying, strike, expiration, optiontype)
     except ValueError: 
         return None 
     midprice = connector.query_midprice(current_date, option)
@@ -314,7 +304,7 @@ def makePosition(connector, current_date, underlying, strike, expiration, option
     return position 
 
 
-def getCurrentPnLPosition(connector, position, current_date):
+def getCurrentPnLPosition(position, current_date):
     
     current_commissions = commissions * (abs(position.amount) * 2)  # buy and sell
     midprice = None 
@@ -322,7 +312,7 @@ def getCurrentPnLPosition(connector, position, current_date):
     # if option is expired, compute theoretical price 
     if current_date >= position.option.expiration:
         current_date = position.option.expiration 
-        midprice = bs_option_price(connector, position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
+        midprice = bs_option_price(position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
         current_commissions = commissions * (abs(position.amount))  # expired, only commissions for entry
     
     while midprice is None: 
@@ -339,24 +329,24 @@ def getCurrentPnLPosition(connector, position, current_date):
     return currentpnl
 
 
-def getCurrentPnLCombo(connector, combo, current_date):
+def getCurrentPnLCombo(combo, current_date):
     currentpnl = 0       
     positions = combo.getPositions()
     for position in positions: 
         if position is not None: 
-            positionPnL = getCurrentPnLPosition(connector, position, current_date)
+            positionPnL = getCurrentPnLPosition(position, current_date)
             if positionPnL is None: return None 
             currentpnl += positionPnL
     return currentpnl
 
 
-def getCurrentPnLGroup(connector, group, current_date):
+def getCurrentPnLGroup(group, current_date):
     current_pnl = 0
     combos = group.getCombos()
     for combo in combos: 
         if combo is None: 
             print("combo is None")
-        combo_pnl = getCurrentPnL(connector, combo, current_date) 
+        combo_pnl = getCurrentPnLCombo(combo, current_date) 
         if combo_pnl is not None: 
             current_pnl += combo_pnl
         else: print("combo_pnl is None")
@@ -372,7 +362,7 @@ def getEntryPrice(combo):
     return entry_price
 
 
-def getDelta(connector, combo, current_date):
+def getDelta(combo, current_date):
 
     delta_sum = 0 
     
@@ -386,17 +376,17 @@ def getDelta(connector, combo, current_date):
     return delta_sum
 
 
-def getDeltaGroup(connector, group, current_date):
+def getDeltaGroup(group, current_date):
 
     delta_sum = 0 
 
     for combo in group.getCombos(): 
-        delta_sum += getDelta(connector, combo, current_date) 
+        delta_sum += getDelta(combo, current_date) 
         
     return delta_sum
 
 
-def getVega(connector, combo, current_date):
+def getVega(combo, current_date):
 
     vega_sum = 0 
     
@@ -410,27 +400,27 @@ def getVega(connector, combo, current_date):
     return vega_sum 
 
 
-def getVegaGroup(connector, group, current_date):
+def getVegaGroup(group, current_date):
 
     vega_sum = 0 
 
     for combo in group.getCombos(): 
-        vega_sum += getVega(connector, combo, current_date) 
+        vega_sum += getVega(combo, current_date) 
         
     return vega_sum 
 
 
-def getThetaGroup(connector, group, current_date):
+def getThetaGroup(group, current_date):
 
     theta_sum = 0 
 
     for combo in group.getCombos(): 
-        theta_sum += getTheta(connector, combo, current_date) 
+        theta_sum += getTheta(combo, current_date) 
         
     return theta_sum  
 
 
-def getTheta(connector, combo, current_date):
+def getTheta(combo, current_date):
     
     theta_sum = 0 
     
@@ -444,10 +434,10 @@ def getTheta(connector, combo, current_date):
     return theta_sum          
                 
                 
-def getDeltaTheta(connector, combo, current_date):
+def getDeltaTheta(combo, current_date):
             
-    delta_sum = getDelta(connector, combo, current_date) 
-    theta_sum = getTheta(connector, combo, current_date) 
+    delta_sum = getDelta(combo, current_date) 
+    theta_sum = getTheta(combo, current_date) 
 
     deltatheta = abs(delta_sum) / abs(theta_sum)
     return deltatheta
@@ -636,7 +626,7 @@ def getLowerBreakpointGroup(group, current_date, include_riskfree=True):
         quote += 1
         
         
-def getDownDay(connector, underlying, date, strategy):
+def getDownDay(underlying, date, strategy=None):
     
     down_definition = 0
     if strategy == "short_term_parking": 
@@ -657,7 +647,7 @@ def getDownDay(connector, underlying, date, strategy):
     return down_day
 
 
-def selectStrikeByPrice(connector, price, underlying, date, expiration, option_type, divisor):
+def selectStrikeByPrice(price, underlying, date, expiration, option_type, divisor):
     
     results = connector.select_strikes_midprice(underlying, date, expiration, option_type, divisor)  
     
@@ -684,11 +674,11 @@ def myround(x, base=25):
     return int(base * round(float(x) / base))
 
 
-def testPCS(connector, short_strike, current_date, underlying, expiration, position_size, width): 
+def testPCS(short_strike, current_date, underlying, expiration, position_size, width): 
 
-    shortposition = makePosition(connector, current_date, underlying, short_strike, expiration, "p", -position_size)
+    shortposition = makePosition(current_date, underlying, short_strike, expiration, "p", -position_size)
     longstrike = (short_strike - width)
-    longposition = makePosition(connector, current_date, underlying, longstrike, expiration, "p", position_size)
+    longposition = makePosition(current_date, underlying, longstrike, expiration, "p", position_size)
 
     if shortposition is None or longposition is None: 
         return None 
@@ -696,7 +686,7 @@ def testPCS(connector, short_strike, current_date, underlying, expiration, posit
     return pcs
 
 
-def bs_option_price(connector, underlying, expiration, option_type, strike, current_date, include_riskfree=True): 
+def bs_option_price(underlying, expiration, option_type, strike, current_date, include_riskfree=True): 
     
     price = None 
     

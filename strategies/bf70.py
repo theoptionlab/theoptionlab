@@ -8,6 +8,8 @@ from util import expected_value
 from util import util
 
 parameters = collections.OrderedDict()
+parameters["patient_days_before"] = [5]
+parameters["patient_days_after"] = [5]
 parameters["cheap_entry"] = [None, 1.1]
 parameters["down_day_entry"] = [True, False]
 parameters["patient_entry"] = [True, False]
@@ -27,38 +29,38 @@ parameters["delta"] = [None]
 
 class bf70(util.Strategy):
     
-    def makeCombo(self, current_date, expiration, position_size):
+    def makeCombo(self, underlying, current_date, expiration, position_size):
 
-        current_quote = self.connector.query_midprice_underlying(self.underlying, current_date)
+        current_quote = util.connector.query_midprice_underlying(underlying, current_date)
         upperlongstrike = int(round(current_quote, -1))
 
         # upper long puts at the money 
-        upperlongposition = util.makePosition(self.connector, current_date, self.underlying, upperlongstrike, expiration, "p", position_size)
+        upperlongposition = util.makePosition(current_date, underlying, upperlongstrike, expiration, "p", position_size)
         if upperlongposition is None: return None 
         
         # short puts 30 points below 
         shortstrike = int(upperlongstrike - 30)
-        shortposition = util.makePosition(self.connector, current_date, self.underlying, shortstrike, expiration, "p", -2 * position_size)
+        shortposition = util.makePosition(current_date, underlying, shortstrike, expiration, "p", -2 * position_size)
         if shortposition is None: return None 
         
         # lower long puts 40 points below short puts
         lowerlongstrike = int(upperlongstrike - 70)
-        lowerlongposition = util.makePosition(self.connector, current_date, self.underlying, lowerlongstrike, expiration, "p", position_size)
+        lowerlongposition = util.makePosition(current_date, underlying, lowerlongstrike, expiration, "p", position_size)
         if lowerlongposition is None: return None 
         
         combo = util.BWB(upperlongposition, None, shortposition, lowerlongposition)
         return combo
 
-    def checkEntry(self, current_date):
+    def checkEntry(self, underlying, current_date):
 
         if (self.down_day_entry): 
-            down_day = util.getDownDay(self.connector, self.underlying, current_date, self.name)
+            down_day = util.getDownDay(underlying, current_date)
             if (not down_day): 
                 return False 
                 
         return True 
     
-    def checkCombo(self, combo):
+    def checkCombo(self, underlying, combo):
         
         # check entry price 
         if self.cheap_entry is not None: 
@@ -68,9 +70,9 @@ class bf70(util.Strategy):
             
         return True 
     
-    def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
+    def checkExit(self, underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
 
-        underlying_midprice = self.connector.query_midprice_underlying(self.underlying, current_date)
+        underlying_midprice = util.connector.query_midprice_underlying(underlying, current_date)
     
         # 1) TP: 1,000 > 35 DTE, 800 > 28 DTE, 600 > 21 DTE, 400
         tp = 200  
@@ -96,7 +98,7 @@ class bf70(util.Strategy):
         
         # 5) expected value < current value 
         if self.ew_exit == True: 
-            ew = expected_value.getExpectedValue(self.connector, self.underlying, combo, current_date, expiration)
+            ew = expected_value.getExpectedValue(util.connector, underlying, combo, current_date, expiration)
             if ew <= current_pnl:
                 return "ew"
             

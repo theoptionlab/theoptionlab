@@ -59,7 +59,7 @@ class MyDB(object):
         self.query(query)
         row = self._db_cur.fetchone()
         if row is None: 
-            print (query)
+#             print (query)
             return None 
         iv = row[0]
         return float(iv) 

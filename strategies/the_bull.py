@@ -3,10 +3,11 @@
 # results visualised on https://theoptionlab.com
 
 import collections
-
 from util import util
 
 parameters = collections.OrderedDict()
+parameters["patient_days_before"] = [None]
+parameters["patient_days_after"] = [None]
 parameters["cheap_entry"] = [None]
 parameters["down_day_entry"] = [False]
 parameters["patient_entry"] = [False]
@@ -26,20 +27,20 @@ parameters["delta"] = [None]
 
 class bull(util.Strategy): 
 
-    def makeCombo(self, current_date, expiration, position_size):
+    def makeCombo(self, underlying, current_date, expiration, position_size):
     
-        closest_strike = self.connector.select_strike_by_delta(current_date, self.underlying, expiration, "p", -10, 25)
+        closest_strike = util.connector.select_strike_by_delta(current_date, underlying, expiration, "p", -10, 25)
         entry_price = 0 
         
         while (entry_price > -2.5): 
             closest_strike += 25
-            pcs = util.testPCS(self.connector, closest_strike, current_date, self.underlying, expiration, position_size, 30)
+            pcs = util.testPCS(closest_strike, current_date, underlying, expiration, position_size, 30)
             if pcs is None: continue 
             else: entry_price = util.getEntryPrice(pcs) 
     
         return pcs 
     
-    def checkExit(self, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
+    def checkExit(self, underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
     
 
         if dte < self.dte_exit: 

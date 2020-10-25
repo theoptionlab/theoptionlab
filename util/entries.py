@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BMonthEnd
+from util import util 
 
 c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
@@ -49,7 +50,7 @@ def getNextEntry(connector, underlying, refDate, days, regular, eom):
     return nextEntry 
 
 
-def getEntries(connector, underlying, start, end, days, regular, eom):
+def getEntries(underlying, start, end, days, regular, eom):
     entries = []
     running = True
     
@@ -65,12 +66,12 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
                                 
             entry_regular = {}
             entry_regular['expiration'] = third_friday
-            exists = connector.check_exists(underlying, third_friday)
+            exists = util.connector.check_exists(underlying, third_friday)
 
             if (exists == 0):  # "expiration not found"
                 third_saturday = third_friday + timedelta(days=1)
                 
-                exists = connector.check_exists(underlying, third_saturday)
+                exists = util.connector.check_exists(underlying, third_saturday)
                 if (exists == 0): 
                     current_date += relativedelta(months=1)
                     continue;
@@ -93,10 +94,10 @@ def getEntries(connector, underlying, start, end, days, regular, eom):
             entry_eom['expiration'] = last_day
             entry_eom['entrydate'] = last_day - timedelta(days) 
             
-            exists = connector.check_exists(underlying, last_day)
+            exists = util.connector.check_exists(underlying, last_day)
             if (exists == 0):  # "expiration not found"
                 day_before = last_day - timedelta(days=1)
-                exists = connector.check_exists(underlying, day_before)
+                exists = util.connector.check_exists(underlying, day_before)
                 if (exists == 0): 
                     continue;
                 else: 

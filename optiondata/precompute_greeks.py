@@ -82,11 +82,10 @@ def precompute(table, computedate, underlying, include_riskfree):
     
 
 # bulk computation 
-# symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB", "PEP", "PFE", "INTC"]
 # for root, dirs, files in os.walk(settings.data_dir):
 #     for file in files:
 #         if file.endswith(".zip"): 
-#              
+#               
 #             index = file.index('_') + 1
 #             datestring = file[index : (index + 10)]
 #             precompute("optiondata", datestring, "*", True)

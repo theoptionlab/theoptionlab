@@ -11,6 +11,7 @@ import shutil
 import numpy as np
 import pandas as pd
 import run_strategies
+
 from util import entries
 from util import performance
 
@@ -21,11 +22,11 @@ def dict_product(d):
         yield dict(zip(keys, element))
         
         
-def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, parameters): 
+def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters): 
     
-    if printalot: print("strategy_name_extra: " + str(strategy_flavor))
+    if printalot: print("strategy_name: " + str(strategy_name))
     if printalot: print("risk_capital: " + str(risk_capital))
-    if printalot: print("underlying: " + str(strategy.underlying))
+    if printalot: print("underlying: " + str(underlying))
     if printalot: print("start: " + str(start))
     if printalot: print("end: " + str(end))
     if printalot: print()
@@ -72,7 +73,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             strategy_code = strategy_code[1:]
         strategy_code = strategy_code.replace("None", "X")
     
-        if (strategy.name == "bf70" or strategy.name == "bf70_plus") and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
+        if (strategy_name == "bf70" or strategy_name == "bf70_plus") and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
             if printalot: print("continue")
             continue
 
@@ -96,7 +97,8 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
 
-        single_entries = entries.getEntries(strategy.connector, strategy.underlying, start, end, permutation['dte_entry'], True, False)
+        single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
+        print (len(single_entries))
         
         for e in range(len(single_entries)): 
             
@@ -105,7 +107,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
             if entry['entrydate'] >= (datetime.now().date() - timedelta(days=7)):
                 break 
             
-            if strategy.name == "the_bull": 
+            if strategy_name == "the_bull": 
                 permutation['dte_exit'] = 37
                 try: 
                     next_entry = single_entries[e + 1]
@@ -113,8 +115,9 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
                 except IndexError: 
                     continue
                 
-            strategy.setParameters(permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
-            result = run_strategies.fly(strategy, risk_capital, entry['entrydate'], entry['expiration'])
+            
+            strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
+            result = run_strategies.fly(strategy, underlying, risk_capital, entry['entrydate'], entry['expiration'])
             
             if (not result is None): 
                 number_of_trades += 1
@@ -235,7 +238,7 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
     else:
         print ("Successfully created the directory %s " % results_path)
 
-    strategy_path = path + "/results/" + strategy.name 
+    strategy_path = path + "/results/" + strategy_name 
 
     try:
         os.mkdir(strategy_path)
@@ -257,5 +260,5 @@ def backtest(strategy, strategy_flavor, risk_capital, printalot, start, end, par
     # Copy files
     shutil.copyfile(path + "/util/web/d3.js", strategy_path + "/d3.js") 
     shutil.copyfile(path + "/util/web/index.html", strategy_path + "/index.html") 
-    shutil.copyfile(path + "/util/web/" + str(strategy.name) + ".html", strategy_path + "/strategy.html") 
+    shutil.copyfile(path + "/util/web/" + str(strategy_name) + ".html", strategy_path + "/strategy.html") 
     

@@ -1,9 +1,7 @@
-var globalData;  
-
 // Set the dimensions of the canvas / graph
 var margin = {top: 30, right: 20, bottom: 70, left: 70},
-    width = 1300 - margin.left - margin.right,
-    height = 650 - margin.top - margin.bottom;
+    width = 1400 - margin.left - margin.right,
+    height = 700 - margin.top - margin.bottom;
 
 // Parse the date / time
 var parseDate = d3.timeParse("%Y-%m-%d");
@@ -28,10 +26,8 @@ var svg = d3.select("#chart")
         .attr("transform", 
               "translate(" + margin.left + "," + margin.top + ")");
 
-
 // Get the data
 d3.csv("results.csv", function(error, data) {
-	
     data.forEach(function(d) {
 		d.date = parseDate(d.date);
 		d.price = +d.pnl;
@@ -39,14 +35,12 @@ d3.csv("results.csv", function(error, data) {
 
     // Scale the range of the data
     x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain([d3.min(data, function(d) { return d.price; }), d3.max(data, function(d) { return d.price; })]);
+    y.domain([0, d3.max(data, function(d) { return d.price; })]);
 
     // Nest the entries by symbol
     var dataNest = d3.nest()
         .key(function(d) {return d.strategy;})
         .entries(data);
-
-	globalData = dataNest;  
 
     // set the colour scale
     var color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -71,16 +65,18 @@ d3.csv("results.csv", function(error, data) {
             .style("fill", function() { // Add the colours dynamically
                 return d.color = color(d.key); })
             .on("click", function(){
-                var opacity = d3.select("#tag"+d.key.replace(/\s+/g, '')).style("opacity")
-                newOpacity = 1 - opacity;
-
+                // Determine if current line is visible 
+                var active   = d.active ? false : true,
+                newOpacity = active ? 0 : 1; 
                 // Hide or show the elements based on the ID
                 d3.select("#tag"+d.key.replace(/\s+/g, ''))
                     .transition().duration(100) 
                     .style("opacity", newOpacity); 
-                console.log((d3.select("#tag"+d.key.replace(/\s+/g, '')).style("opacity")));
+                // Update whether or not the elements are active
+                d.active = active;
                 })  
             .text(d.key); 
+
     });
 
   // Add the X Axis
@@ -94,21 +90,4 @@ d3.csv("results.csv", function(error, data) {
       .attr("class", "axis")
       .call(d3.axisLeft(y));
 
-
 });
-
-
-// Create a function that takes a dataset as input and update the plot:
-function updateData() {
-    // Loop through each symbol / key
-    globalData.forEach(function(d,i) {
-
-        // Determine if current line is visible 
-        // Hide or show the elements based on the ID
-        d3.select("#tag"+d.key.replace(/\s+/g, ''))
-            .transition().duration(100) 
-            .style("opacity", 0); 
-        // Update whether or not the elements are active
-        d.active = 0;
-        })  
-}

@@ -59,5 +59,5 @@ def insert(date):
     print (end - start)
     db.close()
 
-# date = datetime(2020, 4, 13).date()
-# insert(date)
+date = datetime(2020, 10, 20).date()
+insert(date)

@@ -9,15 +9,14 @@ from util import util
 pd.options.mode.chained_assignment = None
 from datetime import datetime 
 
+# vxx options since: 2010-05-28  
 
 startdates = {
-    
   "^RUT": datetime(2004, 1, 2).date(),
   "^SPX": datetime(2004, 1, 2).date(),
   "^VIX": datetime(2006, 2, 27).date(),
   "SPLV": datetime(2011, 11, 1).date(), 
   "SPHB": datetime(2013, 7, 24).date(),
-  "PEP": datetime(2004, 1, 2).date()
 }
 
 
