@@ -14,6 +14,7 @@ parameters["patient_entry"] = [False]
 parameters["min_vix_entry"] = [None]
 parameters["max_vix_entry"] = [None]
 parameters["dte_entry"] = [70]
+parameters["entry"] = [None]
 parameters["els_entry"] = [None]
 parameters["ew_exit"] = [False]
 parameters["pct_exit"] = [0.375, 0.5, 1] 
@@ -63,8 +64,9 @@ class netzero(util.Strategy):
             short_upperexit = -40 + shortdifference  
             
             current_shortdelta = util.connector.select_delta(current_date, underlying, expiration, combo.shortposition.option.type, combo.shortposition.option.strike)
-            if (current_shortdelta > short_lowerexit) or (current_shortdelta < short_upperexit): 
-                return "sdc"
+            if (current_shortdelta is not None):
+                if (current_shortdelta > short_lowerexit) or (current_shortdelta < short_upperexit): 
+                    return "sdc"
 
         # T/D Ratio
         if self.deltatheta_exit is not None: 

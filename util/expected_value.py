@@ -10,9 +10,9 @@ e_spanne = 3
 ratio = 100
 
 
-def getExpectedValue(connector, underlying, combo, current_date, expiration, use_precomputed=True, include_riskfree=True): 
+def getExpectedValue(underlying, combo, current_date, expiration, use_precomputed=True, include_riskfree=True): 
 
-    current_quote = connector.query_midprice_underlying(underlying, current_date)
+    current_quote = float(util.connector.query_midprice_underlying(underlying, current_date))
     if  (current_quote == 0.0): 
         return None 
         
@@ -30,24 +30,24 @@ def getExpectedValue(connector, underlying, combo, current_date, expiration, use
 
     if use_precomputed: 
         try: 
-            atm_iv = connector.select_iv(current_date, underlying, expiration, "p", atm_strike) 
+            atm_iv = float(util.connector.select_iv(current_date, underlying, expiration, "p", atm_strike)) 
         except: 
             atm_iv = 0.01
             
     else: 
         
         try:
-            atm_option = util.Option(connector, current_date, underlying, atm_strike, expiration, "p")
+            atm_option = util.Option(current_date, underlying, atm_strike, expiration, "p")
         except ValueError: 
             return None
-        midprice = connector.query_midprice(current_date, atm_option)
+        midprice = util.connector.query_midprice(current_date, atm_option)
 
         rf = util.interest
         if include_riskfree: 
             rf = util.get_riskfree_libor(current_date, remaining_time_in_years)
             
         try: 
-            atm_iv = implied_volatility.implied_volatility(midprice, current_quote, atm_strike, remaining_time_in_years, rf, atm_option.type)
+            atm_iv = float(implied_volatility.implied_volatility(midprice, current_quote, atm_strike, remaining_time_in_years, rf, atm_option.type))
         except: 
             atm_iv = 0.01
             

@@ -640,7 +640,7 @@ def getDownDay(underlying, date, strategy=None):
                 
     underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
     underlying_midprice_previous = connector.query_midprice_underlying(underlying, previous_date)
-    percentage_move = ((underlying_midprice_current - underlying_midprice_previous) / underlying_midprice_previous) * 100
+    percentage_move = ((float(underlying_midprice_current) - float(underlying_midprice_previous)) / float(underlying_midprice_previous)) * 100
         
     if percentage_move < down_definition: down_day = True
     

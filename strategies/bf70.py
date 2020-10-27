@@ -16,6 +16,7 @@ parameters["patient_entry"] = [True, False]
 parameters["min_vix_entry"] = [None]
 parameters["max_vix_entry"] = [None]
 parameters["dte_entry"] = [70]
+parameters["entry"] = [None]
 parameters["els_entry"] = [None]
 parameters["ew_exit"] = [True, False]
 parameters["pct_exit"] = [None]
@@ -32,7 +33,7 @@ class bf70(util.Strategy):
     def makeCombo(self, underlying, current_date, expiration, position_size):
 
         current_quote = util.connector.query_midprice_underlying(underlying, current_date)
-        upperlongstrike = int(round(current_quote, -1))
+        upperlongstrike = int(round(float(current_quote), -1))
 
         # upper long puts at the money 
         upperlongposition = util.makePosition(current_date, underlying, upperlongstrike, expiration, "p", position_size)
@@ -85,11 +86,11 @@ class bf70(util.Strategy):
             return "tp"
     
         # 2) RUT 10 points below the short strikes
-        if underlying_midprice < combo.shortposition.option.strike - 10: 
+        if float(underlying_midprice) < combo.shortposition.option.strike - 10: 
             return "le"
     
         # 3) remaining time is < 40 DTE and RUT is 60 points above the short strike 
-        if ((dte < 40) and (underlying_midprice > combo.shortposition.option.strike + 60)): 
+        if ((dte < 40) and (float(underlying_midprice) > combo.shortposition.option.strike + 60)): 
             return "ue"
             
         # 4) remaining time < dte_exit
@@ -98,7 +99,7 @@ class bf70(util.Strategy):
         
         # 5) expected value < current value 
         if self.ew_exit == True: 
-            ew = expected_value.getExpectedValue(util.connector, underlying, combo, current_date, expiration)
+            ew = expected_value.getExpectedValue(underlying, combo, current_date, expiration)
             if ew <= current_pnl:
                 return "ew"
             

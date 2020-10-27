@@ -96,8 +96,12 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
-
-        single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
+                
+        if permutation['entry'] == "daily": 
+            single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
+        else: 
+            single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
+        
         print (len(single_entries))
         
         for e in range(len(single_entries)): 
@@ -139,7 +143,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 pnl = result['pnl'] 
                 percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
                 
-                trade_log[i] = [strategy_code, number_of_trades, entry['expiration'], result['entry_date'], result['strikes'], round(result['entry_price'], 2), result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), str(percentage) + '%', result['exit']]
+                trade_log[i] = [strategy_code, number_of_trades, entry['expiration'], result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
                 print(trade_log[i])
                 
                 total_positions += int(result['position_size'])
@@ -247,7 +251,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     else:
         print ("Successfully created the directory %s " % strategy_path)
 
-    df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "strikes", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
+    df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "entry_underlying", "entry_vix", "strikes", "iv_legs", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
     df_log.to_csv(strategy_path + "/single_results.csv")
     
     df_curve = pd.DataFrame(data=equity_curve, index=["strategy", "date", "pnl"]).T

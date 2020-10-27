@@ -1,5 +1,5 @@
 import calendar
-from datetime import timedelta 
+from datetime import timedelta, datetime 
 
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BMonthEnd
@@ -9,7 +9,7 @@ c = calendar.Calendar(firstweekday=calendar.SUNDAY)
 offset = BMonthEnd()
 
 
-def getNextEntry(connector, underlying, refDate, days, regular, eom):
+def getNextEntry(underlying, refDate, days, regular, eom):
             
     running = True
     current_date = refDate
@@ -26,11 +26,11 @@ def getNextEntry(connector, underlying, refDate, days, regular, eom):
         if regular: 
                         
             nextExpiration = third_friday
-            exists = connector.check_exists(underlying, third_friday)
+            exists = util.connector.check_exists(underlying, third_friday)
 
             if (exists == 0):  # "expiration not found"
                 third_saturday = third_friday + timedelta(days=1)
-                exists = connector.check_exists(underlying, third_saturday)
+                exists = util.connector.check_exists(underlying, third_saturday)
                 if (exists == 0): 
                     break;
                 
@@ -53,7 +53,6 @@ def getNextEntry(connector, underlying, refDate, days, regular, eom):
 def getEntries(underlying, start, end, days, regular, eom):
     entries = []
     running = True
-    
     current_date = start 
     
     while running:
@@ -114,3 +113,31 @@ def getEntries(underlying, start, end, days, regular, eom):
 
     sorted_entries = sorted(entries, key=lambda k: k['entrydate']) 
     return sorted_entries 
+
+
+def getDailyEntries(underlying, start, end, days):
+    entries = []
+    running = True
+    current_date = start
+    
+    while running:
+        
+        current_date = current_date + timedelta(days=1) 
+        
+        if current_date.isoweekday() in set((6, 7)):
+            current_date += timedelta(days=8 - current_date.isoweekday())
+    
+        if (current_date >= end) or (current_date >= datetime.now().date()): 
+            running = False 
+            
+        elif util.connector.check_holiday(underlying, current_date): 
+            continue   
+        
+        expiration = util.connector.select_expiration(current_date, underlying, "p", days)
+        entry = {}
+        entry['entrydate'] = current_date
+        entry['expiration'] = expiration
+        entries.append(entry)
+                
+    return entries 
+
