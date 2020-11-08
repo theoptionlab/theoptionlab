@@ -739,9 +739,10 @@ def get_riskfree_libor(date, yte):
             functions_dict[date] = f 
             
         except: 
-            print (str(date))
-            functions_dict[date] = 0 
-            f = functions_dict[date]
+            return (0)
+#             print (str(date))
+#             functions_dict[date] = 0 
+#             f = functions_dict[date]
     
         
     y = float(yte)
