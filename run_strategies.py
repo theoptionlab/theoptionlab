@@ -15,12 +15,14 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
     realized_pnl = 0
     current_date = entrydate 
     max_date = current_date
+    combo = None
         
     if strategy.patient_entry: 
         current_date = entrydate - timedelta(days=strategy.patient_days_before)
         max_date = entrydate + timedelta(days=strategy.patient_days_after)
     
-    while (current_date <= max_date): 
+
+    while (current_date <= max_date):
                         
         combo = None
         
@@ -78,7 +80,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         if iv_legs != "": iv_legs = iv_legs + "/"
         if position is not None: 
             iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
-            iv_legs = iv_legs + iv
+            iv_legs = iv_legs + format(float(iv), '.2f')
         else: iv_legs = iv_legs + "x"
     
     entry_vix = util.connector.query_midprice_underlying("^VIX", entry_date) 
