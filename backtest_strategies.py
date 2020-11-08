@@ -101,27 +101,28 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
-        
-        print (len(single_entries))
-        
+    
         for e in range(len(single_entries)): 
-            
+        
             entry = single_entries[e]
-                                
-            if entry['entrydate'] >= (datetime.now().date() - timedelta(days=7)):
+            entrydate = entry[0]
+            expiration = entry[1]
+
+            if entrydate >= (datetime.now().date() - timedelta(days=7)):
                 break 
             
             if strategy_name == "the_bull": 
                 permutation['dte_exit'] = 37
                 try: 
                     next_entry = single_entries[e + 1]
-                    permutation['dte_exit'] = 66 - (next_entry['entrydate'] - entry['entrydate']).days
+                    next_entrydate = next_entry[0]
+                    permutation['dte_exit'] = 66 - (next_entrydate - entrydate).days
                 except IndexError: 
                     continue
                 
             
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
-            result = run_strategies.fly(strategy, underlying, risk_capital, entry['entrydate'], entry['expiration'])
+            result = run_strategies.fly(strategy, underlying, risk_capital, entrydate, expiration)
             
             if (not result is None): 
                 number_of_trades += 1
@@ -143,7 +144,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 pnl = result['pnl'] 
                 percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
                 
-                trade_log[i] = [strategy_code, number_of_trades, entry['expiration'], result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
+                trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
                 print(trade_log[i])
                 
                 total_positions += int(result['position_size'])
