@@ -62,7 +62,7 @@ class MyDB(object):
         if row is None: 
 #             print (query)
             return None 
-        return format(float(row[0]), '.2f')
+        return float(row[0])
     
        
     def select_delta(self, quote_date, underlying_symbol, expiration, option_type, strike):
@@ -118,7 +118,7 @@ class MyDB(object):
         row = self._db_cur.fetchone()
         if row == None:
             return None
-        return format(float(row[0]), '.2f')
+        return float(row[0])
     
     def query_midprice(self, quote_date, option, printalot=False): 
         if quote_date == None: quote_date = self.query_maxdate()
