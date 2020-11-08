@@ -31,6 +31,7 @@ class bull(util.Strategy):
     def makeCombo(self, underlying, current_date, expiration, position_size):
     
         closest_strike = util.connector.select_strike_by_delta(current_date, underlying, expiration, "p", -10, 25)
+        if closest_strike is None: return None 
         entry_price = 0 
         
         while (entry_price > -2.5): 
