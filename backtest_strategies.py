@@ -7,6 +7,7 @@ from datetime import timedelta
 import itertools
 import os 
 import shutil 
+import time
 
 import numpy as np
 import pandas as pd
@@ -96,12 +97,16 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
-                
+        
+        # measure time here 
+        starttiming = time.time()
         if permutation['entry'] == "daily": 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
-    
+        endtiming = time.time()
+        print("time needed to get single entries: " + str(endtiming - starttiming))
+
         for e in range(len(single_entries)): 
         
             entry = single_entries[e]
