@@ -1,5 +1,5 @@
 import calendar
-from datetime import timedelta, datetime 
+from datetime import timedelta 
 
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BMonthEnd
@@ -120,25 +120,13 @@ def getEntries(underlying, start, end, days, regular, eom):
 
 
 def getDailyEntries(underlying, start, end, days):
+    
+    entry_dates = util.connector.select_entries(start, end, underlying)
     entries = {}
-    running = True
-    current_date = start
     
-    while running:
-        
-        current_date = current_date + timedelta(days=1) 
-        
-        if current_date.isoweekday() in set((6, 7)):
-            current_date += timedelta(days=8 - current_date.isoweekday())
-    
-        if (current_date >= end) or (current_date >= datetime.now().date()): 
-            running = False 
-            
-        elif util.connector.check_holiday(underlying, current_date): 
-            continue   
-        
-        expiration = util.connector.select_expiration(current_date, underlying, "p", days)
-        entries[current_date] = expiration
+    for entry_date in entry_dates: 
+        expiration = util.connector.select_expiration(entry_date[0], underlying, "p", days, 30)
+        entries[entry_date[0]] = expiration
 
     ordered_entries = collections.OrderedDict(sorted(entries.items(), key=lambda x:x[1], reverse=False))   
     single_entries = list(ordered_entries.items())
