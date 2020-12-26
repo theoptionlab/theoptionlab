@@ -627,7 +627,7 @@ def getDownDay(underlying, date, strategy=None):
     down_day = False 
         
     previous_date = date - timedelta(days=1)
-    while (connector.check_holiday(underlying, previous_date) == True): 
+    while (xnys.is_session(pd.Timestamp(previous_date)) == False): 
         previous_date = previous_date - timedelta(days=1)
                 
     underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
