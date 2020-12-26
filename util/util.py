@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-import calendar
 from datetime import datetime, time, timedelta
 import math
 
 from util import postgresql_connector 
 import pandas 
+
 from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
-from pandas.tseries.offsets import BMonthEnd
 from py_vollib import black_scholes
 from scipy.interpolate import InterpolatedUnivariateSpline as interpol
 import workdays
@@ -25,8 +23,6 @@ df_yields.columns = cols
 df_yields['date'] = pandas.to_datetime(df_yields['date'])
 df_yields.set_index('date', inplace=True)
 
-c = calendar.Calendar(firstweekday=calendar.SUNDAY)
-offset = BMonthEnd()
 entries = []
 
 ratio = 100
