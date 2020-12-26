@@ -10,7 +10,7 @@ xnys = tc.get_calendar("XNYS")
 
 
 def fly(strategy, underlying, risk_capital, entrydate, expiration): 
-                
+
     flying = True 
     dailypnls = {}
     previouspnl = 0
@@ -56,17 +56,19 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         print("combo is None")
         return None 
 
+    entry_price = util.getEntryPrice(combo) 
+
     # size up 
-    max_risk = combo.getMaxRisk()
-    if max_risk is None:
+    min_exp = combo.getMinExpiration()
+    if min_exp is None:
         return None 
     
-    position_size = int(risk_capital / abs(max_risk))
+    position_size = int(risk_capital / abs(min_exp))
         
     positions = combo.getPositions()
     for position in positions: 
         position.amount = position.amount * position_size
-    max_risk = max_risk * position_size
+    min_exp = min_exp * position_size
     
     entry_date = current_date 
     entry_price = util.getEntryPrice(combo) 
@@ -114,9 +116,13 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             print("current_pnl is None")
             return None 
 
-        if current_pnl < (max_risk): 
-            print ("not possible: current_pnl < (max_risk)")
+        max_risk = min(min_exp, entry_price)
+        if (current_pnl < max_risk): 
+            print ("current_pnl: " + str(current_pnl))
+            print ("max_risk: " + str(max_risk))
+            print ("not possible: current_pnl < max_risk)")
             continue 
+
 
         dailypnls[current_date] = current_pnl - previouspnl
         previouspnl = current_pnl 
@@ -126,5 +132,3 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         if exit_criterion == None and not flying: exit_criterion = "stop"
         if exit_criterion != None:
             return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
-        
-        

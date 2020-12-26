@@ -28,8 +28,6 @@ df_yields.set_index('date', inplace=True)
 entries = []
 
 ratio = 100
-lower_ul = 1
-upper_ul = 1000000
 dividend = 0
 commissions = 1.25
 connector = postgresql_connector.MyDB()
@@ -37,6 +35,8 @@ connector = postgresql_connector.MyDB()
 interest = 0.0225
 yeartradingdays = 252
 
+min_value = 1 
+max_value = 100000
 
 
 class Strategy(object): 
@@ -126,21 +126,15 @@ class Combo(object):
     def getPositions(self):
         return self.positions 
     
-    def getMaxRisk(self): 
+    def getMinExpiration(self): 
     
-        el = getExpiration(self)
-        lower_expiration_line = el["lower_expiration_line"]
-        upper_expiration_line = el["upper_expiration_line"]
-        
-        if ((lower_expiration_line == 0) and (upper_expiration_line == 0)): 
+        el = getExpirationCombo(self)
+
+        if ((0 in el.values()) or None in el.values()): 
             return None 
-        
-        if ((lower_expiration_line == None) and (upper_expiration_line == None)): 
-            return None  
-        
-        max_risk = min(lower_expiration_line, upper_expiration_line)
-        
-        return max_risk
+
+        return (min(el.values()))
+
 
     def append(self, position):
         self.positions.append(position)
@@ -350,7 +344,7 @@ def getEntryPrice(combo):
     positions = combo.getPositions()
     for position in positions: 
         if position is not None: 
-            entry_price += (position.entry_price * position.amount)
+            entry_price += (position.entry_price * ratio * position.amount)
     return entry_price
 
 
@@ -450,7 +444,7 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
     return deltatheta_exit
 
 
-def getLowerExpiration(combo, include_riskfree=True):
+def getExpiration(combo, underlying_value, include_riskfree=True):
     
     lower_expiration_line = 0
     positions = combo.getPositions()
@@ -464,46 +458,26 @@ def getLowerExpiration(combo, include_riskfree=True):
         if include_riskfree: 
             rf = get_riskfree_libor(position.option.expiration, 0)
     
-        lower_value = black_scholes.black_scholes(position.option.type, lower_ul, position.option.strike, 0, rf, 0)
+        lower_value = black_scholes.black_scholes(position.option.type, underlying_value, position.option.strike, 0, rf, 0)
         lower_expiration = ((lower_value - position.entry_price) * ratio * position.amount)
         lower_expiration_line += lower_expiration
     
     return lower_expiration_line
   
-    
-def getUpperExpiration(combo, include_riskfree=True):
-        
-    upper_expiration_line = 0
-    positions = combo.getPositions()
-    
-    for position in positions:
-        
-        if (position is None) or (position.entry_price is None):
-            return None
-
-        rf = interest
-        if include_riskfree: 
-            rf = get_riskfree_libor(position.option.expiration, 0)
-            
-        upper_value = black_scholes.black_scholes(position.option.type, upper_ul, position.option.strike, 0, rf, 0)
-        upper_expiration = ((upper_value - position.entry_price) * ratio * position.amount)
-        upper_expiration_line += upper_expiration
-    
-    return upper_expiration_line
 
 
-def getExpiration(combo):
+def getExpirationCombo(combo):
+
+    expirations = {} 
+
+    expirations[min_value] = getExpiration(combo, min_value)
+    expirations[max_value] = getExpiration(combo, max_value)
+
+    for position in combo.getPositions(): 
+        expirations[float(position.option.strike)] = getExpiration(combo, float(position.option.strike))
+
+    return expirations
     
-#     print combo.shortposition.option.expiration 
-        
-    lower_expiration_line = getLowerExpiration(combo)
-    upper_expiration_line = getUpperExpiration(combo)
-    
-#     print lower_expiration_line
-#     print upper_expiration_line
-    
-#     percentage = int(round((upper_expiration_line / lower_expiration_line) * ratio))
-    return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line}
 
 
 def getExpirationGroup(group):
@@ -515,15 +489,15 @@ def getExpirationGroup(group):
     
     for combo in butterflies: 
         
-        lower_expiration_line += getLowerExpiration(combo)
-        upper_expiration_line += getUpperExpiration(combo)
+        lower_expiration_line += getExpiration(combo, lower_value)
+        upper_expiration_line += getExpiration(combo, upper_value)
     
     percentage = int(round((upper_expiration_line / lower_expiration_line) * ratio))
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
 
 
 def getQuoteforMarbleOnTop(combo, current_date, include_riskfree=True): 
-    
+
     lowest = combo.lowerlongposition.option.strike  
     highest = combo.upperlongposition.option.strike  
         
@@ -543,7 +517,7 @@ def getQuoteforMarbleOnTop(combo, current_date, include_riskfree=True):
             rf = interest
             if include_riskfree: 
                 rf = get_riskfree_libor(current_date, remaining_time_in_years)
-    
+
             value = black_scholes.black_scholes(position.option.type, float(quote), position.option.strike, remaining_time_in_years, rf, 0)
             guv = ((value - position.entry_price) * ratio * position.amount)
             sum_guv += guv
@@ -552,7 +526,7 @@ def getQuoteforMarbleOnTop(combo, current_date, include_riskfree=True):
             max_guv = sum_guv
             max_quote = quote 
 
-        quote += 1
+        quote += 10
     
     return max_quote 
         
