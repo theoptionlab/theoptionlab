@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-
 from datetime import timedelta, datetime 
+import pandas as pd
+
+import trading_calendars as tc
 
 from util import util
+
+
+xnys = tc.get_calendar("XNYS")
+
 
 
 def fly(strategy, underlying, risk_capital, entrydate, expiration): 
@@ -26,7 +32,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
                         
         combo = None
         
-        while (util.connector.check_holiday(underlying, current_date) == True): 
+        while (xnys.is_session(pd.Timestamp(current_date)) == False): 
             current_date = current_date + timedelta(days=1)
             if (current_date >= expiration) or (current_date >= datetime.now().date()): 
                 return None 
@@ -98,7 +104,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         if (current_date >= expiration) or (current_date >= datetime.now().date()): 
             flying = False 
             
-        elif util.connector.check_holiday(underlying, current_date): 
+        elif (xnys.is_session(pd.Timestamp(current_date)) == False): 
             continue   
         
         # adjust 

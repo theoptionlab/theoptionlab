@@ -1,19 +1,20 @@
-from datetime import datetime, time, timedelta
-import math
-
+from private import settings
 from util import postgresql_connector 
 
+from datetime import datetime, time, timedelta
+import math
 import pandas as pd
+import numpy as np 
+import scipy.stats as st
+
 import trading_calendars as tc
 import pytz
+xnys = tc.get_calendar("XNYS")
 
 from py_vollib import black_scholes
 from scipy.interpolate import InterpolatedUnivariateSpline as interpol
 import zipfile 
 
-import numpy as np 
-from private import settings
-import scipy.stats as st
 
 years = ([0.0, 1 / 360, 1 / 52, 1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12])
 functions_dict = {}
@@ -36,7 +37,7 @@ connector = postgresql_connector.MyDB()
 interest = 0.0225
 yeartradingdays = 252
 
-xnys = tc.get_calendar("XNYS")
+
 
 class Strategy(object): 
     
@@ -281,7 +282,6 @@ def remaining_time(reference, expiration):
     sessions_in_range = xnys.sessions_in_range(
     pd.Timestamp(ref.date(), tz=pytz.UTC),
     pd.Timestamp(expiration.date(), tz=pytz.UTC))
-    print(len(sessions_in_range))
     
     remaining_time_in_years = ((len(sessions_in_range) - 1) - fraction) / yeartradingdays
     return remaining_time_in_years
