@@ -4,7 +4,7 @@ from util import util
 from datetime import datetime 
 from private import settings
 
-date = "2020-11-06"
+date = "2020-12-24"
 print (date)
 print ()
 

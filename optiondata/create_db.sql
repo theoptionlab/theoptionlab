@@ -30,7 +30,7 @@ CREATE TABLE optiondata (
   ask_eod decimal(20,4) DEFAULT NULL,
   underlying_bid_eod decimal(10,4) DEFAULT NULL,
   underlying_ask_eod decimal(10,4) DEFAULT NULL,
-  vwap text,
+  vwap decimal DEFAULT NULL,
   open_interest integer DEFAULT NULL,
   delivery_code varchar(100) DEFAULT NULL,
   iv decimal(65,30) DEFAULT NULL,

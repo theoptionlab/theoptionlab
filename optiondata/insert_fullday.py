@@ -20,7 +20,7 @@ def insert(date):
     cur.execute("DROP TABLE IF EXISTS fullday") 
     
     print("CREATE TABLE")
-    cur.execute("CREATE TABLE fullday(id SERIAL PRIMARY KEY NOT NULL, underlying_symbol VARCHAR, quote_date date, root VARCHAR, expiration date, strike decimal, option_type VARCHAR, open decimal, high decimal, low decimal, close decimal, trade_volume int, bid_size_1545 VARCHAR, bid_1545 decimal, ask_size_1545 VARCHAR, ask_1545 decimal, underlying_bid_1545 decimal, underlying_ask_1545 decimal, underlying_mid_1545 decimal, bid_size_eod VARCHAR, bid_eod VARCHAR, ask_size_eod VARCHAR, ask_eod VARCHAR, mid_1545 decimal, underlying_bid_eod VARCHAR, underlying_ask_eod VARCHAR, vwap VARCHAR, open_interest VARCHAR, delivery_code VARCHAR, rf decimal, rtiy decimal, iv decimal, bs_price_bid_ask decimal, delta decimal, theta decimal, vega decimal)")
+    cur.execute("CREATE TABLE fullday(id SERIAL PRIMARY KEY NOT NULL, underlying_symbol VARCHAR, quote_date date, root VARCHAR, expiration date, strike decimal, option_type VARCHAR, open decimal, high decimal, low decimal, close decimal, trade_volume int, bid_size_1545 VARCHAR, bid_1545 decimal, ask_size_1545 VARCHAR, ask_1545 decimal, underlying_bid_1545 decimal, underlying_ask_1545 decimal, underlying_mid_1545 decimal, bid_size_eod VARCHAR, bid_eod VARCHAR, ask_size_eod VARCHAR, ask_eod VARCHAR, mid_1545 decimal, underlying_bid_eod VARCHAR, underlying_ask_eod VARCHAR, vwap decimal, open_interest VARCHAR, delivery_code VARCHAR, rf decimal, rtiy decimal, iv decimal, bs_price_bid_ask decimal, delta decimal, theta decimal, vega decimal)")
 
     print("CREATE INDEX...")
     cur.execute("CREATE INDEX idx_underlying_symbol_fullday ON fullday USING btree (underlying_symbol)")
@@ -60,5 +60,5 @@ def insert(date):
     db.close()
 
 
-date = datetime(2020, 11, 6).date()
+date = datetime(2020, 12, 24).date()
 insert(date)

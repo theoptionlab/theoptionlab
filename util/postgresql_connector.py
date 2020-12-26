@@ -15,6 +15,7 @@ class MyDB(object):
     def query(self, query):
         return self._db_cur.execute(query)
 
+
     def __del__(self):
         self._db_connection.close()
 
