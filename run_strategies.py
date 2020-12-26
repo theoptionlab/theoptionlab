@@ -4,6 +4,8 @@ from datetime import timedelta, datetime
 import pandas as pd
 
 import trading_calendars as tc
+import pytz
+from dateutil import tz
 
 from util import util
 
@@ -98,8 +100,6 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
                                         
         current_date = current_date + timedelta(days=1) 
         
-        if current_date.isoweekday() in set((6, 7)):
-            current_date += timedelta(days=8 - current_date.isoweekday())
 
         if (current_date >= expiration) or (current_date >= datetime.now().date()): 
             flying = False 
@@ -107,12 +107,17 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         elif (xnys.is_session(pd.Timestamp(current_date)) == False): 
             continue   
         
+        # get shorter trading days 
+        new_york_timestamp = xnys.next_close(pd.Timestamp(current_date)).astimezone(tz.gettz('America/New_York'))
+        if (new_york_timestamp.hour < 16): 
+            print ("Shortened trading day: " + str(new_york_timestamp))
+
+
         # adjust 
         dte = (expiration - current_date).days
         combo, realized_pnl, adjustment_counter = strategy.adjust(underlying, combo, current_date, realized_pnl, entry_price, expiration, position_size, dte, adjustment_counter)
 
         # exit 
-        
         current_pnl = util.getCurrentPnLCombo(combo, current_date) + realized_pnl
         
         if current_pnl is None: 
