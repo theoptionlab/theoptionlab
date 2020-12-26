@@ -2,16 +2,11 @@
 from __future__ import division
 from datetime import timedelta, datetime 
 import pandas as pd
-
 import trading_calendars as tc
-import pytz
-from dateutil import tz
 
 from util import util
 
-
 xnys = tc.get_calendar("XNYS")
-
 
 
 def fly(strategy, underlying, risk_capital, entrydate, expiration): 
@@ -106,11 +101,6 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             
         elif (xnys.is_session(pd.Timestamp(current_date)) == False): 
             continue   
-        
-        # get shorter trading days 
-        new_york_timestamp = xnys.next_close(pd.Timestamp(current_date)).astimezone(tz.gettz('America/New_York'))
-        if (new_york_timestamp.hour < 16): 
-            print ("Shortened trading day: " + str(new_york_timestamp))
 
 
         # adjust 
