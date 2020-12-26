@@ -2,12 +2,13 @@ from datetime import datetime, time, timedelta
 import math
 
 from util import postgresql_connector 
-import pandas 
 
-from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
+import pandas as pd
+import trading_calendars as tc
+import pytz
+
 from py_vollib import black_scholes
 from scipy.interpolate import InterpolatedUnivariateSpline as interpol
-import workdays
 import zipfile 
 
 import numpy as np 
@@ -17,10 +18,10 @@ import scipy.stats as st
 years = ([0.0, 1 / 360, 1 / 52, 1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12])
 functions_dict = {}
 
-df_yields = pandas.read_csv(settings.path_to_libor_csv)
+df_yields = pd.read_csv(settings.path_to_libor_csv)
 cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
 df_yields.columns = cols
-df_yields['date'] = pandas.to_datetime(df_yields['date'])
+df_yields['date'] = pd.to_datetime(df_yields['date'])
 df_yields.set_index('date', inplace=True)
 
 entries = []
@@ -35,16 +36,7 @@ connector = postgresql_connector.MyDB()
 interest = 0.0225
 yeartradingdays = 252
 
-cal = get_calendar('USFederalHolidayCalendar')  # Create calendar instance
-cal.rules.pop(7)  # Remove Veteran's Day rule
-cal.rules.pop(6)  # Remove Columbus Day rule
-tradingCal = HolidayCalendarFactory('TradingCalendar', cal, GoodFriday)
-
-dr = pandas.date_range(start='2010-06-01', end='2019-01-01')
-
-cal1 = tradingCal()
-holidays = cal1.holidays(start=dr.min(), end=dr.max()).date
-
+xnys = tc.get_calendar("XNYS")
 
 class Strategy(object): 
     
@@ -285,9 +277,13 @@ def remaining_time(reference, expiration):
     expiration_fraction = expiration_date_excel - expiration_excel
     
     fraction = expiration_fraction - ref_fraction
-    networkingdays = workdays.networkdays(ref.date(), expiration.date(), holidays)
     
-    remaining_time_in_years = ((networkingdays - 1) - fraction) / yeartradingdays
+    sessions_in_range = xnys.sessions_in_range(
+    pd.Timestamp(ref.date(), tz=pytz.UTC),
+    pd.Timestamp(expiration.date(), tz=pytz.UTC))
+    print(len(sessions_in_range))
+    
+    remaining_time_in_years = ((len(sessions_in_range) - 1) - fraction) / yeartradingdays
     return remaining_time_in_years
     
 
@@ -727,7 +723,7 @@ def get_riskfree_libor(date, yte):
             dr = df.iloc[0]
             rates = ([0.0, dr['ON'] / 100, dr['w1'] / 100, dr['m1'] / 100, dr['m2'] / 100, dr['m3'] / 100, dr['m6'] / 100, dr['m12'] / 100])
             
-            df_inter = pandas.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+            df_inter = pd.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
             df_inter.loc[0] = years
             df_inter.loc[1] = rates
             df_inter = df_inter.dropna(axis='columns')
