@@ -12,8 +12,13 @@ ratio = 100
 
 def getExpectedValue(underlying, combo, current_date, expiration, use_precomputed=True, include_riskfree=True): 
 
-    current_quote = float(util.connector.query_midprice_underlying(underlying, current_date))
-    if  (current_quote == 0.0): 
+    current_quote_original = util.connector.query_midprice_underlying(underlying, current_date)
+    
+    if (current_quote_original is None): 
+        return None 
+
+    current_quote = float(current_quote_original)
+    if (current_quote == 0.0): 
         return None 
         
     expiration_time = datetime.combine(expiration, time(16))

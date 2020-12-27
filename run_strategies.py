@@ -29,7 +29,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
                         
         combo = None
         
-        while (xnys.is_session(pd.Timestamp(current_date)) == False): 
+        while ((xnys.is_session(pd.Timestamp(current_date)) == False) or (util.connector.query_midprice_underlying(underlying, current_date) is None)): 
             current_date = current_date + timedelta(days=1)
             if (current_date >= expiration) or (current_date >= datetime.now().date()): 
                 return None 
@@ -96,14 +96,15 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
     while flying:  
                                         
         current_date = current_date + timedelta(days=1) 
-        
 
         if (current_date >= expiration) or (current_date >= datetime.now().date()): 
             flying = False 
-            
-        elif (xnys.is_session(pd.Timestamp(current_date)) == False): 
+
+        if (xnys.is_session(pd.Timestamp(current_date)) == False): 
             continue   
 
+        elif (util.connector.query_midprice_underlying(underlying, current_date) is None): 
+            continue   
 
         # adjust 
         dte = (expiration - current_date).days
@@ -116,11 +117,10 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             print("current_pnl is None")
             return None 
 
-        max_risk = min(min_exp, entry_price)
-        if (current_pnl < max_risk): 
+        if (current_pnl < min_exp): 
             print ("current_pnl: " + str(current_pnl))
-            print ("max_risk: " + str(max_risk))
-            print ("not possible: current_pnl < max_risk)")
+            print ("min_exp: " + str(min_exp))
+            print ("not possible: current_pnl < min_exp)")
             continue 
 
 
@@ -128,7 +128,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         previouspnl = current_pnl 
         dit = (current_date - entry_date).days
 
-        exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size)
+        exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, min_exp, entry_price, current_date, expiration, dit, position_size)
         if exit_criterion == None and not flying: exit_criterion = "stop"
         if exit_criterion != None:
-            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : max_risk, 'position_size' : position_size}
+            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : min_exp, 'position_size' : position_size}

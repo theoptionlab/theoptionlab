@@ -344,7 +344,7 @@ def getEntryPrice(combo):
     positions = combo.getPositions()
     for position in positions: 
         if position is not None: 
-            entry_price += (position.entry_price * ratio * position.amount)
+            entry_price += (position.entry_price * position.amount)
     return entry_price
 
 
@@ -601,13 +601,13 @@ def getDownDay(underlying, date, strategy=None):
     down_day = False 
         
     previous_date = date - timedelta(days=1)
-    while (xnys.is_session(pd.Timestamp(previous_date)) == False): 
+    while ((xnys.is_session(pd.Timestamp(previous_date)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None)): 
         previous_date = previous_date - timedelta(days=1)
                 
     underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
     underlying_midprice_previous = connector.query_midprice_underlying(underlying, previous_date)
-    percentage_move = ((float(underlying_midprice_current) - float(underlying_midprice_previous)) / float(underlying_midprice_previous)) * 100
-        
+    
+    percentage_move = ((float(underlying_midprice_current) - float(underlying_midprice_previous)) / float(underlying_midprice_previous)) * 100    
     if percentage_move < down_definition: down_day = True
     
     return down_day
