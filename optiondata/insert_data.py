@@ -17,8 +17,8 @@ startdates = {
   "^VIX": datetime(2006, 2, 27).date(),
   "SPLV": datetime(2011, 11, 1).date(), 
   "SPHB": datetime(2013, 7, 24).date(),
+  "VXX": datetime(2010, 5, 28).date()
 }
-
 
 def insert(underlyings, dir):
     
