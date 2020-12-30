@@ -81,13 +81,13 @@ def precompute(table, computedate, underlying, include_riskfree):
         db.close()
     
 
+# precompute("optiondata", "2010-06-01", "*", True)
+
 # bulk computation 
-# for root, dirs, files in os.walk(settings.data_dir):
-#     for file in files:
-#         if file.endswith(".zip"): 
-#               
-#             index = file.index('_') + 1
-#             datestring = file[index : (index + 10)]
-#             precompute("optiondata", datestring, "*", True)
-
-
+for root, dirs, files in os.walk(settings.data_dir):
+    for file in files:
+        if file.endswith(".zip"): 
+              
+            index = file.index('_') + 1
+            datestring = file[index : (index + 10)]
+            precompute("optiondata", datestring, "*", True)
