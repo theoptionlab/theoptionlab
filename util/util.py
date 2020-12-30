@@ -437,8 +437,8 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
     combos = group.getCombos()
     for combo in combos: 
         
-        delta_sum += getDelta(combo, current_date, expiration, underlying) 
-        theta_sum += getTheta(combo, current_date, expiration, underlying) 
+        delta_sum += getDelta(combo, current_date) 
+        theta_sum += getTheta(combo, current_date) 
         
     deltatheta_exit = abs(delta_sum) / abs(theta_sum)
     return deltatheta_exit
