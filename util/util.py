@@ -677,12 +677,18 @@ def bs_option_price(underlying, expiration, option_type, strike, current_date, i
     
 def unzip(datafilepath): 
     
-    archive = zipfile.ZipFile(datafilepath)
-    
-    for ffile in archive.namelist():
-        archive.extract(ffile, settings.tempbasepath)
-        unzippedpath = settings.tempbasepath + ffile
-        return unzippedpath 
+    try:
+        archive = zipfile.ZipFile(datafilepath)
+        
+        for ffile in archive.namelist():
+            archive.extract(ffile, settings.tempbasepath)
+            unzippedpath = settings.tempbasepath + ffile
+            return unzippedpath 
+
+    except Exception as e:
+        print (datafilepath)
+        print(e)
+        return None 
     
 
 def get_riskfree_libor(date, yte):
