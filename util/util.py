@@ -489,8 +489,8 @@ def getExpirationGroup(group):
     
     for combo in butterflies: 
         
-        lower_expiration_line += getExpiration(combo, lower_value)
-        upper_expiration_line += getExpiration(combo, upper_value)
+        lower_expiration_line += getExpiration(combo, util.min_value)
+        upper_expiration_line += getExpiration(combo, util.max_value)
     
     percentage = int(round((upper_expiration_line / lower_expiration_line) * ratio))
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
@@ -601,7 +601,7 @@ def getDownDay(underlying, date, strategy=None):
     down_day = False 
         
     previous_date = date - timedelta(days=1)
-    while ((xnys.is_session(pd.Timestamp(previous_date)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None)): 
+    while ((xnys.is_session(pd.Timestamp(previous_date)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None) or (connector.query_midprice_underlying(underlying, previous_date) == 0)): 
         previous_date = previous_date - timedelta(days=1)
                 
     underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
