@@ -488,9 +488,8 @@ def getExpirationGroup(group):
     butterflies = group.getCombos()
     
     for combo in butterflies: 
-        
-        lower_expiration_line += getExpiration(combo, util.min_value)
-        upper_expiration_line += getExpiration(combo, util.max_value)
+        lower_expiration_line += getExpiration(combo, min_value)
+        upper_expiration_line += getExpiration(combo, max_value)
     
     percentage = int(round((upper_expiration_line / lower_expiration_line) * ratio))
     return {'lower_expiration_line': lower_expiration_line, 'upper_expiration_line': upper_expiration_line, 'percentage' : percentage}
