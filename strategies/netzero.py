@@ -58,11 +58,11 @@ class netzero(util.Strategy):
         
         # percentage change of short strike 
         if (self.pct_exit is not None): 
-    
+
             shortdifference = self.pct_exit * -40
             short_lowerexit = -40 - shortdifference
             short_upperexit = -40 + shortdifference  
-            
+
             current_shortdelta = util.connector.select_delta(current_date, underlying, expiration, combo.shortposition.option.type, combo.shortposition.option.strike)
             if (current_shortdelta is not None):
                 if (current_shortdelta > short_lowerexit) or (current_shortdelta < short_upperexit): 
@@ -70,14 +70,14 @@ class netzero(util.Strategy):
 
         # T/D Ratio
         if self.deltatheta_exit is not None: 
-            current_deltatheta = util.getDeltaTheta(self.underlying, combo, current_date, expiration)
+            current_deltatheta = util.getDeltaTheta(combo, current_date)
             if current_deltatheta > self.deltatheta_exit:
                 return "d/t"
-    
+
         # time exit 
         if ((self.dte_exit is not None) and (dte < self.dte_exit)): 
             return "dte"
-        
+
         # DIT (days in trade) 
         if ((self.dit_exit is not None) and (dit > self.dit_exit)): 
             return "dit"
@@ -85,5 +85,5 @@ class netzero(util.Strategy):
         # Take Profit
         if ((self.tp_exit is not None) and (current_pnl >= (-max_risk * self.tp_exit))): 
             return "tp"
-        
+
         return None 
