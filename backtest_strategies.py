@@ -249,6 +249,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         print ("Successfully created the directory %s " % results_path)
 
     strategy_path = path + "/results/" + strategy_name 
+    if permutation['entry'] == "daily": 
+        strategy_path += "_daily"
 
     try:
         os.mkdir(strategy_path)
@@ -270,5 +272,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     # Copy files
     shutil.copyfile(path + "/util/web/d3.js", strategy_path + "/d3.js") 
     shutil.copyfile(path + "/util/web/index.html", strategy_path + "/index.html") 
-    shutil.copyfile(path + "/util/web/" + str(strategy_name) + ".html", strategy_path + "/strategy.html") 
-    
+    try:
+        shutil.copyfile(path + "/util/web/" + str(strategy_name) + ".html", strategy_path + "/strategy.html") 
+    except Exception as e:
+        print(e)
