@@ -1,13 +1,13 @@
 from optiondata import insert_data 
 from private import settings
-from optiondata import precompute_greeks
+import precompute_greeks
 from optiondata import precompute_bs_price
 from util import util 
 from private import download_data
 
 download_data.download(settings.data_dir) 
 
-symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB", "VXX"]
+symbols = ["^RUT", "^SPX", "^VIX", "SPLV", "SPHB", "VXX", "VXXB"]
 
 # insert all data from the directory specified in the path. 
 dates = insert_data.insert(symbols, settings.data_dir)
