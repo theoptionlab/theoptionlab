@@ -53,11 +53,10 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             continue 
 
     if combo is None: 
-        print("combo is None")
+        print ("combo is None")
         return None 
 
-    entry_price = util.getCurrentPnLCombo(combo, current_date) # was util.getEntryPrice(combo) but that does not include commissions
-    
+    entry_price = util.getEntryPrice(combo) # does not include commissions
 
     # size up 
     min_exp = combo.getMinExpiration()
@@ -75,7 +74,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
     min_exp = min_exp * position_size
     
     entry_date = current_date 
-    entry_price = util.getCurrentPnLCombo(combo, current_date) # was util.getEntryPrice(combo) but that does not include commissions
+    entry_price = util.getEntryPrice(combo) 
 
     strikes = ""
     for position in combo.getPositions(): 
@@ -118,12 +117,12 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         current_pnl = util.getCurrentPnLCombo(combo, current_date) + realized_pnl
         
         if current_pnl is None: 
-            print("current_pnl is None")
+            print ("current_pnl is None")
             return None 
 
-        if (current_pnl < min_exp): 
-            print ("current_pnl: " + str(current_pnl))
-            print ("min_exp: " + str(min_exp))
+        if (round(current_pnl, 2) < round(min_exp, 2)): 
+            print ("current_pnl: " + str(round(current_pnl, 2)))
+            print ("min_exp: " + str(round(min_exp, 2)))
             print ("not possible: current_pnl < min_exp)")
             continue 
 
