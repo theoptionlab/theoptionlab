@@ -316,7 +316,7 @@ def getCurrentPnLPosition(position, current_date):
 
 
 def getCurrentPnLCombo(combo, current_date):
-    currentpnl = 0       
+    currentpnl = 0
     positions = combo.getPositions()
     for position in positions: 
         if position is not None: 
@@ -446,7 +446,7 @@ def getDeltaThetaGroup(underlying, group, current_date, expiration):
 
 def getExpiration(combo, underlying_value, include_riskfree=True):
     
-    lower_expiration_line = 0
+    expiration_line = 0
     positions = combo.getPositions()
     
     for position in positions:
@@ -458,11 +458,12 @@ def getExpiration(combo, underlying_value, include_riskfree=True):
         if include_riskfree: 
             rf = get_riskfree_libor(position.option.expiration, 0)
     
-        lower_value = black_scholes.black_scholes(position.option.type, underlying_value, position.option.strike, 0, rf, 0)
-        lower_expiration = ((lower_value - position.entry_price) * ratio * position.amount)
-        lower_expiration_line += lower_expiration
+        value = black_scholes.black_scholes(position.option.type, underlying_value, position.option.strike, 0, rf, 0)
+
+        expiration = ((value - position.entry_price) * ratio * position.amount - (commissions * 2 * (abs(position.amount))))
+        expiration_line += expiration
     
-    return lower_expiration_line
+    return expiration_line
   
 
 

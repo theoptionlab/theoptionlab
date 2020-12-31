@@ -121,7 +121,6 @@ class MyDB(object):
     def query_midprice(self, quote_date, option, printalot=False): 
         if quote_date == None: quote_date = self.query_maxdate()
         query = "SELECT mid_1545 FROM optiondata WHERE mid_1545 != 0 AND underlying_symbol = '" + option.underlying + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(option.expiration) + "' AND strike = '" + str(option.strike) + "' AND option_type = '" + option.type + "'"    
-#         print(query) 
         self.query(query)
         if printalot: print(query) 
         row = self._db_cur.fetchone()
@@ -143,7 +142,6 @@ class MyDB(object):
 
     def query_expiration_before(self, underlying_symbol, strike, option_type, quote_date, later_expiration, budget):
         query = "SELECT expiration FROM optiondata WHERE quote_date = '" + str(quote_date) + "' AND underlying_symbol = '" + underlying_symbol + "' AND expiration > '" + str(quote_date) + "' AND expiration < '" + str(later_expiration) + "' AND option_type = '" + str(option_type) + "' AND strike = '" + str(strike) + "' AND mid_1545 <= " + str(budget) + " AND mid_1545 != 0 ORDER BY expiration DESC LIMIT 1"
-#         print(query) 
         self.query(query)
         row = self._db_cur.fetchone()
         if row is None: 
