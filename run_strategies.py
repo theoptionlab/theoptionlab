@@ -56,7 +56,8 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         print("combo is None")
         return None 
 
-    entry_price = util.getEntryPrice(combo) 
+    entry_price = util.getCurrentPnLCombo(combo, current_date) # was util.getEntryPrice(combo) but that does not include commissions
+    
 
     # size up 
     min_exp = combo.getMinExpiration()
@@ -71,7 +72,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
     min_exp = min_exp * position_size
     
     entry_date = current_date 
-    entry_price = util.getEntryPrice(combo) 
+    entry_price = util.getCurrentPnLCombo(combo, current_date) # was util.getEntryPrice(combo) but that does not include commissions
 
     strikes = ""
     for position in combo.getPositions(): 
