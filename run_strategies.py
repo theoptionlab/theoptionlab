@@ -65,6 +65,9 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         return None 
     
     position_size = int(risk_capital / abs(min_exp))
+    if position_size == 0: 
+        print ("Too little capital. Minimum required: " + str(abs(min_exp)))
+        return None 
         
     positions = combo.getPositions()
     for position in positions: 
@@ -130,6 +133,6 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         dit = (current_date - entry_date).days
 
         exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, min_exp, entry_price, current_date, expiration, dit, position_size)
-        if exit_criterion == None and not flying: exit_criterion = "stop"
+        if exit_criterion == None and not flying: exit_criterion = "exp"
         if exit_criterion != None:
-            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : min_exp, 'position_size' : position_size}
+            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : min_exp, 'position_size' : position_size}
