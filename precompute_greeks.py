@@ -28,7 +28,6 @@ def precompute(table, computedate, underlying, include_riskfree):
         date_fragment = "quote_date = '" + str(computedate) + "' AND "
         
     query = "SELECT id, quote_date, underlying_mid_1545, mid_1545, expiration, strike, option_type FROM " + table + " WHERE " + underlying_fragment + date_fragment + "iv IS NULL" 
-    print (query)
     
     cur2.execute(query)
     result = cur2.fetchall()
@@ -83,11 +82,11 @@ def precompute(table, computedate, underlying, include_riskfree):
 
 # precompute("optiondata", "2010-06-01", "*", True)
 
-# bulk computation 
-for root, dirs, files in os.walk(settings.data_dir):
-    for file in files:
-        if file.endswith(".zip"): 
+# # bulk computation 
+# for root, dirs, files in os.walk(settings.data_dir):
+#     for file in files:
+#         if file.endswith(".zip"): 
               
-            index = file.index('_') + 1
-            datestring = file[index : (index + 10)]
-            precompute("optiondata", datestring, "*", True)
+#             index = file.index('_') + 1
+#             datestring = file[index : (index + 10)]
+#             precompute("optiondata", datestring, "*", True)
