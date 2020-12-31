@@ -147,6 +147,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     total_daily_pnls.sort_index(inplace=True)
     
                 pnl = result['pnl'] 
+
                 percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
                 
                 trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
@@ -161,15 +162,15 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     winners += 1
                     if pnl > maxwinner: 
                         maxwinner = pnl 
-                          
+
                 else: 
                     allloosers += pnl
                     loosers += 1 
                     if pnl < maxlooser: 
                         maxlooser = pnl
-                        
+
                 total_dit += result['dit']
-                
+
                 if result['exit'] in exits: 
                     exits[result['exit']] += 1
                 else:
@@ -178,7 +179,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         if (total_daily_pnls is None): 
             print("no trades")
             continue 
-        
+
         total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
     
@@ -265,7 +266,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     df_curve = pd.DataFrame(data=equity_curve, index=["strategy", "date", "pnl"]).T
     df_curve.to_csv(strategy_path + "/results.csv")
     
-    df_table = pd.DataFrame(data=results_table, index=["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on capital %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
+    df_table = pd.DataFrame(data=results_table, index=["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on previous peak %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
     df_table.to_html(strategy_path + "/results_table.html")
     print(df_table)
 
