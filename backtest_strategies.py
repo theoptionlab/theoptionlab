@@ -148,7 +148,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     
                 pnl = result['pnl'] 
 
-                percentage = round((int(pnl) / abs(result['max_risk'])) * 100, 2)
+                percentage = round((float(pnl) / abs(result['max_risk'])) * 100, 2)
                 
                 trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
                 print(trade_log[i])
