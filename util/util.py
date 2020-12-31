@@ -292,17 +292,15 @@ def makePosition(current_date, underlying, strike, expiration, optiontype, posit
 
 def getCurrentPnLPosition(position, current_date):
     
-    current_commissions = commissions * (abs(position.amount) * 2)  # buy and sell
+    current_commissions = commissions * (abs(position.amount))  # only buy, can expire 
     midprice = None 
     
     # if option is expired, compute theoretical price 
     if current_date >= position.option.expiration:
         current_date = position.option.expiration 
         midprice = bs_option_price(position.option.underlying, position.option.expiration, position.option.type, position.option.strike, current_date)
-        current_commissions = commissions * (abs(position.amount))  # expired, only commissions for entry
-    
-    while midprice is None: 
 
+    while midprice is None: 
         midprice = connector.query_midprice(current_date, position.option)
         
         if midprice is None: 
@@ -460,7 +458,7 @@ def getExpiration(combo, underlying_value, include_riskfree=True):
     
         value = black_scholes.black_scholes(position.option.type, underlying_value, position.option.strike, 0, rf, 0)
 
-        expiration = ((value - position.entry_price) * ratio * position.amount - (commissions * 2 * (abs(position.amount))))
+        expiration = ((value - position.entry_price) * ratio * position.amount - (commissions * (abs(position.amount))))
         expiration_line += expiration
     
     return expiration_line
