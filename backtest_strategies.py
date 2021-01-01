@@ -22,33 +22,34 @@ def dict_product(d):
     for element in itertools.product(*d.values()):
         yield dict(zip(keys, element))
 
+
 def make_dir(path): 
     try:
         os.mkdir(path)
     except OSError:
-        print ("Creation of the directory %s failed" % path)
+        print ('Creation of the directory %s failed' % path)
     else:
-        print ("Successfully created the directory %s " % path)
-        
-        
+        print ('Successfully created the directory %s ' % path)
+
+
 def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters): 
 
     # create directory 
     path = os.getcwd()
-    make_dir(path + "/results")
+    make_dir(path + '/results')
 
 
-    if printalot: print("strategy_name: " + str(strategy_name))
-    if printalot: print("risk_capital: " + str(risk_capital))
-    if printalot: print("underlying: " + str(underlying))
-    if printalot: print("start: " + str(start))
-    if printalot: print("end: " + str(end))
-    if printalot: print()
+    if printalot: print ('strategy_name: ' + str(strategy_name))
+    if printalot: print ('risk_capital: ' + str(risk_capital))
+    if printalot: print ('underlying: ' + str(underlying))
+    if printalot: print ('start: ' + str(start))
+    if printalot: print ('end: ' + str(end))
+    if printalot: print ()
 
     permutations = dict_product(parameters)
-    if printalot: print("number of combinations: " + str(len(list(permutations))))
+    if printalot: print('number of combinations: ' + str(len(list(permutations))))
 
-    trade_log = collections.OrderedDict()
+    trade_log = {}
     equity_curve = collections.OrderedDict()
     results_table = collections.OrderedDict()
     
@@ -60,35 +61,35 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         for k, v in permutation.items(): 
             if printalot: print(k, v)
         
-        strategy_code = "" 
+        strategy_code = '' 
 
-        if permutation['cheap_entry'] is not None: strategy_code += "C"
-        if ((len(parameters["down_day_entry"]) > 1) and permutation['down_day_entry']): strategy_code += "D"
-        if ((len(parameters["patient_entry"]) > 1) and permutation['patient_entry']): strategy_code += "P"
-        if ((len(parameters["ew_exit"]) > 1) and permutation['ew_exit']): strategy_code += "E"
-        if permutation['min_vix_entry'] is not None: strategy_code += "_MIV_" + str(permutation['min_vix_entry'])
-        if permutation['max_vix_entry'] is not None: strategy_code += "_MAV_" + str(permutation['max_vix_entry'])
-        if (len(parameters["dte_entry"]) > 1): strategy_code += "_E" + str(permutation['dte_entry'])
-        if permutation['els_entry'] is not None: strategy_code += "_EE_" + str(permutation['els_entry'])
-        if permutation['pct_exit'] is not None: strategy_code += "_C" + str(int(permutation['pct_exit'] * 100))
-        if ((len(parameters["dte_exit"]) > 1) and permutation['dte_exit'] != 0): strategy_code += "_X" + str(permutation['dte_exit'])
-        if ((len(parameters["dit_exit"]) > 1) and permutation['dit_exit'] != 0): strategy_code += "_EXDIT_" + str(permutation['dit_exit'])
-        if (len(parameters["deltatheta_exit"]) > 1): strategy_code += "_DT_" + str(permutation['deltatheta_exit'])
+        if permutation['cheap_entry'] is not None: strategy_code += 'C'
+        if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
+        if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
+        if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
+        if permutation['min_vix_entry'] is not None: strategy_code += '_MIV_' + str(permutation['min_vix_entry'])
+        if permutation['max_vix_entry'] is not None: strategy_code += '_MAV_' + str(permutation['max_vix_entry'])
+        if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
+        if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
+        if permutation['pct_exit'] is not None: strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
+        if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
+        if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
+        if (len(parameters['deltatheta_exit']) > 1): strategy_code += '_DT_' + str(permutation['deltatheta_exit'])
         code_tp = permutation['tp_exit']
         if (code_tp is not None) and code_tp < 1: 
             code_tp = int(code_tp * 100)
-        if (len(parameters["tp_exit"]) > 1): strategy_code += "_P" + str(code_tp)
-        if (len(parameters["sl_exit"]) > 1): strategy_code += "_L" + str(permutation['sl_exit'])
-        if (len(parameters["delta"]) > 1): strategy_code += "_D_" + str(permutation['delta'])
+        if (len(parameters['tp_exit']) > 1): strategy_code += '_P' + str(code_tp)
+        if (len(parameters['sl_exit']) > 1): strategy_code += '_L' + str(permutation['sl_exit'])
+        if (len(parameters['delta']) > 1): strategy_code += '_D_' + str(permutation['delta'])
         
-        if strategy_code == "": 
-            strategy_code = "X"
-        if strategy_code.startswith("_"): 
+        if strategy_code == '': 
+            strategy_code = 'X'
+        if strategy_code.startswith('_'): 
             strategy_code = strategy_code[1:]
-        strategy_code = strategy_code.replace("None", "X")
+        strategy_code = strategy_code.replace('None', 'X')
     
-        if (strategy_name == "bf70" or strategy_name == "bf70_plus") and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
-            if printalot: print("continue")
+        if (strategy_name == 'bf70' or strategy_name == 'bf70_plus') and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
+            if printalot: print('continue')
             continue
 
         number_of_trades = 0
@@ -113,21 +114,21 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         
 
         # create directories  
-        strategy_path = path + "/results/" + strategy_name 
-        if permutation['entry'] == "daily": 
-            strategy_path += "_daily"
+        strategy_path = path + '/results/' + strategy_name 
+        if permutation['entry'] == 'daily': 
+            strategy_path += '_daily'
         make_dir(strategy_path)
-        make_dir(strategy_path + "/daily_pnls")
+        make_dir(strategy_path + '/daily_pnls')
 
 
         # measure time here 
         starttiming = time.time()
-        if permutation['entry'] == "daily": 
+        if permutation['entry'] == 'daily': 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
         endtiming = time.time()
-        print("time needed to get single entries: " + str(endtiming - starttiming))
+        print('time needed to get single entries: ' + str(endtiming - starttiming))
 
         for e in range(len(single_entries)): 
         
@@ -138,7 +139,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             if entrydate >= (datetime.now().date() - timedelta(days=7)):
                 break 
             
-            if strategy_name == "the_bull": 
+            if strategy_name == 'the_bull': 
                 permutation['dte_exit'] = 37
                 try: 
                     next_entry = single_entries[e + 1]
@@ -156,56 +157,55 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 i += 1
                 
                 # save dailypnls 
-                file_name = strategy_path + "/daily_pnls/" + strategy_code + "_" + str(i) + ".csv"
+                file_name = strategy_path + '/daily_pnls/' + strategy_code + '_' + str(i) + '.csv'
                 result['dailypnls'].to_csv(file_name)
+                del result['dailypnls']
 
+                trade_log[i] = dict({'trade nr.' : number_of_trades, 'strategy_code': strategy_code}, **result)
+                print (trade_log[i])
+
+
+                # TODO/GOAL: get all of this out of this loop 
+                total_positions += int(trade_log[i]['position_size'])
                 
-                
-                trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(result['pnl']), int(result['max_risk']), int(result['position_size']), format(float(round((float(result['pnl']) / abs(result['max_risk'])) * 100, 2)), '.2f') + '%', result['exit']]
-                print(trade_log[i])
-                
-                total_positions += int(result['position_size'])
-                
-                total_risk += result['max_risk']
-                total_pnl += result['pnl'] 
-                if result['pnl']  >= 0: 
-                    allwinners += result['pnl'] 
+                total_risk += trade_log[i]['max_risk']
+                total_pnl += trade_log[i]['pnl'] 
+                if trade_log[i]['pnl']  >= 0: 
+                    allwinners += trade_log[i]['pnl'] 
                     winners += 1
-                    if result['pnl']  > maxwinner: 
-                        maxwinner = result['pnl']  
+                    if trade_log[i]['pnl']  > maxwinner: 
+                        maxwinner = trade_log[i]['pnl']  
 
                 else: 
-                    allloosers += result['pnl'] 
+                    allloosers += trade_log[i]['pnl'] 
                     loosers += 1 
-                    if result['pnl'] < maxlooser: 
-                        maxlooser = result['pnl'] 
+                    if trade_log[i]['pnl'] < maxlooser: 
+                        maxlooser = trade_log[i]['pnl'] 
 
-                total_dit += result['dit']
+                total_dit += trade_log[i]['dit']
 
-                if result['exit'] in exits: 
-                    exits[result['exit']] += 1
+                if trade_log[i]['exit'] in exits: 
+                    exits[trade_log[i]['exit']] += 1
                 else:
-                    exits[result['exit']] = 1
-
-        # finished looping through entry dates  
+                    exits[trade_log[i]['exit']] = 1
 
 
         # merge all total_daily_pnls
-        for filename in os.listdir(strategy_path + "/daily_pnls"):
-            if filename.endswith(".csv"):
+        for filename in os.listdir(strategy_path + '/daily_pnls'):
+            if filename.endswith('.csv'):
                 
-                daily_pnls = pd.read_csv(strategy_path + "/daily_pnls/" + filename, parse_dates=['date'], index_col=['date'])
+                daily_pnls = pd.read_csv(strategy_path + '/daily_pnls/' + filename, parse_dates=['date'], index_col=['date'])
 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
                     
                 else: 
-                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(["date"], as_index=True).sum()
+                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(['date'], as_index=True).sum()
                     total_daily_pnls.sort_index(inplace=True)
 
 
         if (total_daily_pnls is None): 
-            print("no trades")
+            print('no trades')
             continue 
 
 
@@ -252,10 +252,9 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         average_position_size = total_positions / number_of_trades
         rod = round((average_percentage / (total_dit / number_of_trades)), 2)
 
-        if printalot: print 
+        if printalot: print()
         for key, value in exits.items():
-            if printalot: print(key + " exit: \t" + str(value))
-        print () 
+            if printalot: print(key + ' exit: \t' + str(value))
             
         days = (end - start).days
         years = round((days / 365), 2)
@@ -269,21 +268,21 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
 
     # finished looping through permutations 
-
-    df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "entry_underlying", "entry_vix", "strikes", "iv_legs", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
-    df_log.to_csv(strategy_path + "/single_results.csv")
+    df_log = pd.DataFrame.from_dict(trade_log, orient='index')
+    # df_log = pd.DataFrame(data=trade_log, index=['trade nr.', 'strategy_code', 'entry_date', 'expiration', 'exit_date', 'entry_underlying', 'entry_vix', 'strikes', 'iv_legs', 'entry_price', 'dte', 'dit', 'pnl', 'max_risk', 'position_size', 'percentage', 'exit']).T
+    df_log.to_csv(strategy_path + '/single_results.csv')
     
-    df_curve = pd.DataFrame(data=equity_curve, index=["strategy", "date", "pnl"]).T
-    df_curve.to_csv(strategy_path + "/results.csv")
+    df_curve = pd.DataFrame(data=equity_curve, index=['strategy', 'date', 'pnl']).T
+    df_curve.to_csv(strategy_path + '/results.csv')
     
-    df_table = pd.DataFrame(data=results_table, index=["trades", "Sharpe", "Sortino", "total pnl", "avg pnl", "avg risk", "avg RoR %", "annualized RoR%", "max dd $", "max dd on risk %", "max dd on previous peak %", "max dd date", "max dd duration", "pct winners", "avg winner", "max winner", "avg looser", "max looser", "avg DIT", "avg size", "avg RoR / avg DIT", "RRR"])
-    df_table.to_html(strategy_path + "/results_table.html")
+    df_table = pd.DataFrame(data=results_table, index=['trades', 'Sharpe', 'Sortino', 'total pnl', 'avg pnl', 'avg risk', 'avg RoR %', 'annualized RoR%', 'max dd $', 'max dd on risk %', 'max dd on previous peak %', 'max dd date', 'max dd duration', 'pct winners', 'avg winner', 'max winner', 'avg looser', 'max looser', 'avg DIT', 'avg size', 'avg RoR / avg DIT', 'RRR'])
+    df_table.to_html(strategy_path + '/results_table.html')
     print(df_table)
 
     # Copy files
-    shutil.copyfile(path + "/util/web/d3.js", strategy_path + "/d3.js") 
-    shutil.copyfile(path + "/util/web/index.html", strategy_path + "/index.html") 
+    shutil.copyfile(path + '/util/web/d3.js', strategy_path + '/d3.js') 
+    shutil.copyfile(path + '/util/web/index.html', strategy_path + '/index.html') 
     try:
-        shutil.copyfile(path + "/util/web/" + str(strategy_name) + ".html", strategy_path + "/strategy.html") 
+        shutil.copyfile(path + '/util/web/' + str(strategy_name) + '.html', strategy_path + '/strategy.html') 
     except Exception as e:
         print(e)

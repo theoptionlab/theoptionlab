@@ -141,4 +141,5 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             daily_pnls.sort_index(inplace=True)
             daily_pnls.columns = ['pnl']
 
-            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : daily_pnls, 'max_risk' : min_exp, 'position_size' : position_size}
+            return {'entry_date': entry_date, 'expiration': expiration, 'exit_date': current_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'entry_price': format(float(entry_price / position_size), '.2f'), 'dte' : dte, 'dit' : dit, 'pnl': current_pnl, 'dailypnls' : daily_pnls, 'max_risk' : min_exp, 'position_size' : position_size, 'percentage': str(format(float(round((float(current_pnl) / abs(min_exp)) * 100, 2)), '.2f')) + '%', 'exit': exit_criterion}
+            
