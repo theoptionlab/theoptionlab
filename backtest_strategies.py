@@ -213,7 +213,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
     
         annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        annualized_sortino_ratio = performance.sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
+        annualized_sortino_ratio = performance.annualized_sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
         
         for key, value in total_daily_pnls.iterrows():
             j += 1

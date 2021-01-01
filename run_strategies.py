@@ -127,7 +127,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             continue 
 
 
-        daily_pnls_dict[current_date] = current_pnl - previouspnl
+        daily_pnls_dict[current_date] = float(format(float(current_pnl - previouspnl), '.2f'))
         previouspnl = current_pnl 
         dit = (current_date - entry_date).days
 
@@ -141,5 +141,4 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             daily_pnls.sort_index(inplace=True)
             daily_pnls.columns = ['pnl']
 
-            return {'entry_date': entry_date, 'expiration': expiration, 'exit_date': current_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'entry_price': format(float(entry_price / position_size), '.2f'), 'dte' : dte, 'dit' : dit, 'pnl': current_pnl, 'dailypnls' : daily_pnls, 'max_risk' : min_exp, 'position_size' : position_size, 'percentage': str(format(float(round((float(current_pnl) / abs(min_exp)) * 100, 2)), '.2f')) + '%', 'exit': exit_criterion}
-            
+            return {'entry_date': entry_date, 'expiration': expiration, 'exit_date': current_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'entry_price': format(float(entry_price / position_size), '.2f'), 'dte' : dte, 'dit' : dit, 'pnl': float(format(float(current_pnl), '.2f')), 'dailypnls' : daily_pnls, 'max_risk' : float(format(float(min_exp), '.2f')), 'position_size' : position_size, 'percentage': str(format(float(round((float(current_pnl) / abs(min_exp)) * 100, 2)), '.2f')) + '%', 'exit': exit_criterion}
