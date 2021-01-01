@@ -41,7 +41,10 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     strategy_path = path + '/results/' + strategy_name 
     if daily: strategy_path += '_daily'
     make_dir(strategy_path)
-    shutil.rmtree(strategy_path + '/daily_pnls')
+    try: 
+        shutil.rmtree(strategy_path + '/daily_pnls')
+    except Exception as e:
+        print(e)
     make_dir(strategy_path + '/daily_pnls')
 
 
@@ -261,7 +264,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         
         rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
 
-        results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
+        results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': max_dd, 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date.date(), 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
 
 
     # finished looping through permutations 
@@ -271,7 +274,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
     df_curve.to_csv(strategy_path + '/results.csv')
     
-    df_table = pd.DataFrame(data=results_table, index=['trades', 'Sharpe', 'Sortino', 'total pnl', 'avg pnl', 'avg risk', 'avg RoR %', 'annualized RoR%', 'max dd $', 'max dd on risk %', 'max dd on previous peak %', 'max dd date', 'max dd duration', 'pct winners', 'avg winner', 'max winner', 'avg looser', 'max looser', 'avg DIT', 'avg size', 'avg RoR / avg DIT', 'RRR'])
+    df_table = pd.DataFrame.from_dict(results_table, orient='index')
     df_table.to_html(strategy_path + '/results_table.html')
     print(df_table)
 
