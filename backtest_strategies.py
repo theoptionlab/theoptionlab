@@ -33,13 +33,13 @@ def make_dir(path):
         print ('Successfully created the directory %s ' % path)
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily=False): 
+def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily_entry=False): 
 
     # create directories  
     path = os.getcwd()
     make_dir(path + '/results')
     strategy_path = path + '/results/' + strategy_name 
-    if daily: strategy_path += '_daily'
+    if daily_entry: strategy_path += '_daily'
     make_dir(strategy_path)
     try: 
         shutil.rmtree(strategy_path + '/daily_pnls')
@@ -123,7 +123,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
         # measure time to get entries 
         starttiming = time.time()
-        if daily: 
+        if daily_entry: 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
