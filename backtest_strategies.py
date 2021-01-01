@@ -132,12 +132,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
-    
-                daily_pnls = pd.DataFrame.from_dict(result['dailypnls'], orient='index')
-                daily_pnls = daily_pnls.reindex(daily_pnls.index.rename('date'))
-                daily_pnls.index = pd.to_datetime(daily_pnls.index)
-                daily_pnls.sort_index(inplace=True)
-                daily_pnls.columns = ['pnl']
+
+                daily_pnls = result['dailypnls']
                 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls

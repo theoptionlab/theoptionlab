@@ -12,7 +12,7 @@ xnys = tc.get_calendar("XNYS")
 def fly(strategy, underlying, risk_capital, entrydate, expiration): 
 
     flying = True 
-    dailypnls = {}
+    daily_pnls_dict = {}
     previouspnl = 0
     adjustment_counter = 0 
     realized_pnl = 0
@@ -127,11 +127,18 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             continue 
 
 
-        dailypnls[current_date] = current_pnl - previouspnl
+        daily_pnls_dict[current_date] = current_pnl - previouspnl
         previouspnl = current_pnl 
         dit = (current_date - entry_date).days
 
         exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, min_exp, entry_price, current_date, expiration, dit, position_size)
         if exit_criterion == None and not flying: exit_criterion = "exp"
         if exit_criterion != None:
-            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : dailypnls, 'max_risk' : min_exp, 'position_size' : position_size}
+            
+            daily_pnls = pd.DataFrame.from_dict(daily_pnls_dict, orient='index')
+            daily_pnls = daily_pnls.reindex(daily_pnls.index.rename('date'))
+            daily_pnls.index = pd.to_datetime(daily_pnls.index)
+            daily_pnls.sort_index(inplace=True)
+            daily_pnls.columns = ['pnl']
+
+            return {'exit': exit_criterion, 'entry_date': entry_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'exit_date': current_date, 'entry_price': format(float(entry_price / position_size), '.2f'), 'pnl': current_pnl, 'dte' : dte, 'dit' : dit, 'dailypnls' : daily_pnls, 'max_risk' : min_exp, 'position_size' : position_size}
