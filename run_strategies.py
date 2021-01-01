@@ -127,8 +127,8 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             continue 
 
 
-        daily_pnls_dict[current_date] = float(format(float(current_pnl - previouspnl), '.2f'))
-        previouspnl = current_pnl 
+        daily_pnls_dict[current_date] = format(float(current_pnl - previouspnl), '.2f')
+        previouspnl = current_pnl
         dit = (current_date - entry_date).days
 
         exit_criterion = strategy.checkExit(underlying, combo, dte, current_pnl, min_exp, entry_price, current_date, expiration, dit, position_size)
