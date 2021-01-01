@@ -154,19 +154,11 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
-
                 
-                daily_pnls = result['dailypnls']
-
                 # save dailypnls 
-                daily_pnls.to_csv(strategy_path + "/daily_pnls/" + strategy_code + "_" + str(i) + ".csv")
-                
-                if (total_daily_pnls is None): 
-                    total_daily_pnls = daily_pnls
-                    
-                else: 
-                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(["date"], as_index=True).sum()
-                    total_daily_pnls.sort_index(inplace=True)
+                file_name = strategy_path + "/daily_pnls/" + strategy_code + "_" + str(i) + ".csv"
+                result['dailypnls'].to_csv(file_name)
+
     
                 pnl = result['pnl'] 
 
@@ -198,10 +190,23 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 else:
                     exits[result['exit']] = 1
     
+
+                # merge for total_daily_pnls
+                daily_pnls = pd.read_csv(file_name, parse_dates=['date'], index_col=['date'])
+
+                if (total_daily_pnls is None): 
+                    total_daily_pnls = daily_pnls
+                    
+                else: 
+                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(["date"], as_index=True).sum()
+                    total_daily_pnls.sort_index(inplace=True)
+
+
         # finished looping through parameters 
         if (total_daily_pnls is None): 
             print("no trades")
             continue 
+
 
         total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
         total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
@@ -261,6 +266,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
         results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
 
+
+    # finished looping through permutations 
 
     df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "entry_underlying", "entry_vix", "strikes", "iv_legs", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
     df_log.to_csv(strategy_path + "/single_results.csv")
