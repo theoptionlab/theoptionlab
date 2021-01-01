@@ -189,10 +189,15 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     exits[result['exit']] += 1
                 else:
                     exits[result['exit']] = 1
-    
 
-                # merge for total_daily_pnls
-                daily_pnls = pd.read_csv(file_name, parse_dates=['date'], index_col=['date'])
+        # finished looping through entry dates  
+
+
+        # merge all total_daily_pnls
+        for filename in os.listdir(strategy_path + "/daily_pnls"):
+            if filename.endswith(".csv"):
+                
+                daily_pnls = pd.read_csv(strategy_path + "/daily_pnls/" + filename, parse_dates=['date'], index_col=['date'])
 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
@@ -202,7 +207,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     total_daily_pnls.sort_index(inplace=True)
 
 
-        # finished looping through parameters 
         if (total_daily_pnls is None): 
             print("no trades")
             continue 
