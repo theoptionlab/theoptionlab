@@ -11,8 +11,8 @@ import time
 
 import numpy as np
 import pandas as pd
-import run_strategies
 
+import run_strategies
 from util import entries
 from util import performance
 
@@ -21,10 +21,23 @@ def dict_product(d):
     keys = d.keys()
     for element in itertools.product(*d.values()):
         yield dict(zip(keys, element))
+
+def make_dir(path): 
+    try:
+        os.mkdir(path)
+    except OSError:
+        print ("Creation of the directory %s failed" % path)
+    else:
+        print ("Successfully created the directory %s " % path)
         
         
 def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters): 
-    
+
+    # create directory 
+    path = os.getcwd()
+    make_dir(path + "/results")
+
+
     if printalot: print("strategy_name: " + str(strategy_name))
     if printalot: print("risk_capital: " + str(risk_capital))
     if printalot: print("underlying: " + str(underlying))
@@ -98,6 +111,15 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
         
+
+        # create directories  
+        strategy_path = path + "/results/" + strategy_name 
+        if permutation['entry'] == "daily": 
+            strategy_path += "_daily"
+        make_dir(strategy_path)
+        make_dir(strategy_path + "/daily_pnls")
+
+
         # measure time here 
         starttiming = time.time()
         if permutation['entry'] == "daily": 
@@ -133,7 +155,11 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 number_of_trades += 1
                 i += 1
 
+                
                 daily_pnls = result['dailypnls']
+
+                # save dailypnls 
+                daily_pnls.to_csv(strategy_path + "/daily_pnls/" + strategy_code + "_" + str(i) + ".csv")
                 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
@@ -172,6 +198,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 else:
                     exits[result['exit']] = 1
     
+        # finished looping through parameters 
         if (total_daily_pnls is None): 
             print("no trades")
             continue 
@@ -234,27 +261,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
         results_table[strategy_code] = [number_of_trades, annualized_sharpe_ratio, annualized_sortino_ratio, int(total_pnl), average_pnl, average_risk, average_percentage, annualized_RoR, max_dd, max_dd_risk_percentage, max_dd_percentage, running_max_dd_date.date(), max_dd_duration, percentage_winners, average_winner, int(maxwinner), average_looser, int(maxlooser), average_dit, average_position_size, rod, rrr] 
 
-    path = os.getcwd()
-    print ("The current working directory is %s" % path)
-
-    results_path = path + "/results" 
-    try:
-        os.mkdir(results_path)
-    except OSError:
-        print ("Creation of the directory %s failed" % results_path)
-    else:
-        print ("Successfully created the directory %s " % results_path)
-
-    strategy_path = path + "/results/" + strategy_name 
-    if permutation['entry'] == "daily": 
-        strategy_path += "_daily"
-
-    try:
-        os.mkdir(strategy_path)
-    except OSError:
-        print ("Creation of the directory %s failed" % strategy_path)
-    else:
-        print ("Successfully created the directory %s " % strategy_path)
 
     df_log = pd.DataFrame(data=trade_log, index=["strategy_code", "trade nr.", "expiration", "entry_date", "entry_underlying", "entry_vix", "strikes", "iv_legs", "entry_price", "exit_date", "DIT", "DTE", "pnl", "max risk", "position size", "percentage", "exit"]).T
     df_log.to_csv(strategy_path + "/single_results.csv")
