@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta 
 import itertools
 import os 
+import glob
 import shutil 
 import time
 
@@ -40,7 +41,9 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     strategy_path = path + '/results/' + strategy_name 
     if daily: strategy_path += '_daily'
     make_dir(strategy_path)
+    shutil.rmtree(strategy_path + '/daily_pnls')
     make_dir(strategy_path + '/daily_pnls')
+
 
     if printalot: print ('strategy_name: ' + str(strategy_name))
     if printalot: print ('risk_capital: ' + str(risk_capital))
@@ -212,7 +215,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         for key, value in total_daily_pnls.iterrows():
             j += 1
             total += value['pnl']
-            equity_curve[j] = [strategy_code, key.date(), int(total)]
+            equity_curve[j] = {'strategy': strategy_code, 'date': key.date(), 'pnl': float(format(float(total), '.2f'))}
                              
             if total >= running_global_peak: 
                 running_global_peak = total
@@ -265,7 +268,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     df_log = pd.DataFrame.from_dict(trade_log, orient='index')
     df_log.to_csv(strategy_path + '/single_results.csv')
     
-    df_curve = pd.DataFrame(data=equity_curve, index=['strategy', 'date', 'pnl']).T
+    df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
     df_curve.to_csv(strategy_path + '/results.csv')
     
     df_table = pd.DataFrame(data=results_table, index=['trades', 'Sharpe', 'Sortino', 'total pnl', 'avg pnl', 'avg risk', 'avg RoR %', 'annualized RoR%', 'max dd $', 'max dd on risk %', 'max dd on previous peak %', 'max dd date', 'max dd duration', 'pct winners', 'avg winner', 'max winner', 'avg looser', 'max looser', 'avg DIT', 'avg size', 'avg RoR / avg DIT', 'RRR'])
