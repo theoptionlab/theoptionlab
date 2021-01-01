@@ -28,8 +28,8 @@ def sortino_ratio(er, returns, rf, target=0):
 
 
 def annualized_sortino_ratio(er, returns, rf, target=0):
-    sortino_ratio = sortino_ratio(er, returns, rf, target=0) 
-    annualized_sortino_ratio = round((np.sqrt(252) * sortino_ratio), 2)
+    sr = sortino_ratio(er, returns, rf, target=0) 
+    annualized_sortino_ratio = round((np.sqrt(252) * sr), 2)
     return annualized_sortino_ratio
 
 
