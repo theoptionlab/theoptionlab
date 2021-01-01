@@ -32,12 +32,15 @@ def make_dir(path):
         print ('Successfully created the directory %s ' % path)
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters): 
+def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily=False): 
 
-    # create directory 
+    # create directories  
     path = os.getcwd()
     make_dir(path + '/results')
-
+    strategy_path = path + '/results/' + strategy_name 
+    if daily: strategy_path += '_daily'
+    make_dir(strategy_path)
+    make_dir(strategy_path + '/daily_pnls')
 
     if printalot: print ('strategy_name: ' + str(strategy_name))
     if printalot: print ('risk_capital: ' + str(risk_capital))
@@ -111,19 +114,10 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
-        
 
-        # create directories  
-        strategy_path = path + '/results/' + strategy_name 
-        if permutation['entry'] == 'daily': 
-            strategy_path += '_daily'
-        make_dir(strategy_path)
-        make_dir(strategy_path + '/daily_pnls')
-
-
-        # measure time here 
+        # measure time to get entries 
         starttiming = time.time()
-        if permutation['entry'] == 'daily': 
+        if daily: 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
@@ -269,7 +263,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
     # finished looping through permutations 
     df_log = pd.DataFrame.from_dict(trade_log, orient='index')
-    # df_log = pd.DataFrame(data=trade_log, index=['trade nr.', 'strategy_code', 'entry_date', 'expiration', 'exit_date', 'entry_underlying', 'entry_vix', 'strikes', 'iv_legs', 'entry_price', 'dte', 'dit', 'pnl', 'max_risk', 'position_size', 'percentage', 'exit']).T
     df_log.to_csv(strategy_path + '/single_results.csv')
     
     df_curve = pd.DataFrame(data=equity_curve, index=['strategy', 'date', 'pnl']).T
