@@ -147,10 +147,10 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 except IndexError: 
                     continue
                 
-            
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
             result = run_strategies.fly(strategy, underlying, risk_capital, entrydate, expiration)
             
+
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
@@ -159,29 +159,26 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 file_name = strategy_path + "/daily_pnls/" + strategy_code + "_" + str(i) + ".csv"
                 result['dailypnls'].to_csv(file_name)
 
-    
-                pnl = result['pnl'] 
-
-                percentage = round((float(pnl) / abs(result['max_risk'])) * 100, 2)
                 
-                trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(pnl), int(result['max_risk']), int(result['position_size']), format(float(percentage), '.2f') + '%', result['exit']]
+                
+                trade_log[i] = [strategy_code, number_of_trades, expiration, result['entry_date'], result['entry_underlying'], result['entry_vix'], result['strikes'], result['iv_legs'], result['entry_price'], result['exit_date'], result['dit'], result['dte'], int(result['pnl']), int(result['max_risk']), int(result['position_size']), format(float(round((float(result['pnl']) / abs(result['max_risk'])) * 100, 2)), '.2f') + '%', result['exit']]
                 print(trade_log[i])
                 
                 total_positions += int(result['position_size'])
                 
                 total_risk += result['max_risk']
-                total_pnl += pnl
-                if pnl >= 0: 
-                    allwinners += pnl
+                total_pnl += result['pnl'] 
+                if result['pnl']  >= 0: 
+                    allwinners += result['pnl'] 
                     winners += 1
-                    if pnl > maxwinner: 
-                        maxwinner = pnl 
+                    if result['pnl']  > maxwinner: 
+                        maxwinner = result['pnl']  
 
                 else: 
-                    allloosers += pnl
+                    allloosers += result['pnl'] 
                     loosers += 1 
-                    if pnl < maxlooser: 
-                        maxlooser = pnl
+                    if result['pnl'] < maxlooser: 
+                        maxlooser = result['pnl'] 
 
                 total_dit += result['dit']
 
