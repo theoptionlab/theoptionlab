@@ -121,7 +121,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
 
-        # measure time to get entries 
+        # get entries, measure time 
         starttiming = time.time()
         if daily_entry: 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
@@ -130,6 +130,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         endtiming = time.time()
         print('time needed to get single entries: ' + str(endtiming - starttiming))
 
+        # loop through entries 
         for e in range(len(single_entries)): 
         
             entry = single_entries[e]
@@ -148,6 +149,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 except IndexError: 
                     continue
                 
+            # run with parameters 
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
             result = run_strategies.fly(strategy, underlying, risk_capital, entrydate, expiration)
             
@@ -155,9 +157,11 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             if (not result is None): 
                 number_of_trades += 1
                 i += 1
-                
-                # save dailypnls 
-                file_name = strategy_path + '/daily_pnls/' + strategy_code + '_' + str(i) + '.csv'
+
+                # make dir and save dailypnls 
+                strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
+                make_dir(strategy_code_path)
+                file_name = strategy_code_path + str(i) + '.csv'
                 result['dailypnls'].to_csv(file_name)
                 del result['dailypnls']
 
@@ -189,12 +193,13 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 else:
                     exits[trade_log[i]['exit']] = 1
 
+        # finished looping through entries 
 
         # merge all total_daily_pnls
-        for filename in os.listdir(strategy_path + '/daily_pnls'):
+        for filename in os.listdir(strategy_code_path):
             if filename.endswith('.csv'):
                 
-                daily_pnls = pd.read_csv(strategy_path + '/daily_pnls/' + filename, parse_dates=['date'], index_col=['date'])
+                daily_pnls = pd.read_csv(strategy_code_path + filename, parse_dates=['date'], index_col=['date'])
 
                 if (total_daily_pnls is None): 
                     total_daily_pnls = daily_pnls
@@ -218,8 +223,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         for key, value in total_daily_pnls.iterrows():
             j += 1
             total += value['pnl']
-            equity_curve[j] = {'strategy': strategy_code, 'date': key.date(), 'pnl': float(format(float(total), '.2f'))}
-                             
+            equity_curve[j] = {'strategy': strategy_code, 'date': key.date(), 'pnl': format(float(total), '.2f')}
+                            
             if total >= running_global_peak: 
                 running_global_peak = total
                 min_since_global_peak = total
@@ -249,8 +254,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             average_looser = 0
             
         average_dit = int(total_dit / number_of_trades)
-        average_position_size = total_positions / number_of_trades
-        rod = round((average_percentage / (total_dit / number_of_trades)), 2)
+        average_position_size = format(float(total_positions / number_of_trades), '.2f')
+        rod = format(float(average_percentage / (total_dit / number_of_trades)), '.2f')
 
         if printalot: print()
         for key, value in exits.items():
@@ -264,7 +269,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         
         rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
 
-        results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': max_dd, 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date.date(), 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
+        results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': format(float(max_dd), '.2f'), 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date.date(), 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
 
 
     # finished looping through permutations 
@@ -276,7 +281,8 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     
     df_table = pd.DataFrame.from_dict(results_table, orient='index')
     df_table.to_html(strategy_path + '/results_table.html')
-    print(df_table)
+    print ()
+    print (df_table)
 
     # Copy files
     shutil.copyfile(path + '/util/web/d3.js', strategy_path + '/d3.js') 
@@ -284,4 +290,4 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     try:
         shutil.copyfile(path + '/util/web/' + str(strategy_name) + '.html', strategy_path + '/strategy.html') 
     except Exception as e:
-        print(e)
+        print (e)
