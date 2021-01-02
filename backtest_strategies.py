@@ -152,7 +152,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
             # run with parameters 
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
             result = run_strategies.fly(strategy, underlying, risk_capital, entrydate, expiration)
-            
 
             if (not result is None): 
                 number_of_trades += 1
@@ -167,33 +166,36 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
 
                 trade_log[i] = dict({'trade nr.' : number_of_trades, 'strategy_code': strategy_code}, **result)
                 print (trade_log[i])
+        # finished looping through entries 
 
 
-                # TODO/GOAL: get all of this out of this loop 
-                total_positions += int(trade_log[i]['position_size'])
+        # filter entries for strategy 
+        for key, value in trade_log.items():
+            if (value['strategy_code'] == strategy_code): 
+
+                total_positions += int(value['position_size'])
                 
-                total_risk += trade_log[i]['max_risk']
-                total_pnl += trade_log[i]['pnl'] 
-                if trade_log[i]['pnl']  >= 0: 
-                    allwinners += trade_log[i]['pnl'] 
+                total_risk += value['max_risk']
+                total_pnl += value['pnl'] 
+                if value['pnl']  >= 0: 
+                    allwinners += value['pnl'] 
                     winners += 1
-                    if trade_log[i]['pnl']  > maxwinner: 
-                        maxwinner = trade_log[i]['pnl']  
+                    if value['pnl']  > maxwinner: 
+                        maxwinner = value['pnl']  
 
                 else: 
-                    allloosers += trade_log[i]['pnl'] 
+                    allloosers += value['pnl'] 
                     loosers += 1 
-                    if trade_log[i]['pnl'] < maxlooser: 
-                        maxlooser = trade_log[i]['pnl'] 
+                    if value['pnl'] < maxlooser: 
+                        maxlooser = value['pnl'] 
 
-                total_dit += trade_log[i]['dit']
+                total_dit += value['dit']
 
-                if trade_log[i]['exit'] in exits: 
-                    exits[trade_log[i]['exit']] += 1
+                if value['exit'] in exits: 
+                    exits[value['exit']] += 1
                 else:
-                    exits[trade_log[i]['exit']] = 1
+                    exits[value['exit']] = 1
 
-        # finished looping through entries 
 
         # merge all total_daily_pnls
         for filename in os.listdir(strategy_code_path):
