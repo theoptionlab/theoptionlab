@@ -160,27 +160,41 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 print (trade_log[i])
 
 
+    # finished looping, save trade_log 
+    df_log = pd.DataFrame.from_dict(trade_log, orient='index')
+    df_log.to_csv(strategy_path + '/single_results.csv')
+
+
+    # start with computing stats 
+    df = pd.read_csv(strategy_path + '/single_results.csv') 
+    single_results = df.to_dict(orient='index')
+
+    for strategy_code in strategy_codes: 
+
+        strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
+
+        exits = {} 
+        total_positions = 0
+        total_risk = 0
+        total_pnl = 0
         winners = 0 
         allwinners = 0
         allloosers = 0
         maxwinner = 0 
         loosers = 0
         maxlooser = 0 
-        total_pnl = 0
-        total_risk = 0
-        exits = {}
         total_dit = 0
+
         total_daily_pnls = None 
         total = risk_capital
-        total_positions = 0
-        
         running_global_peak = 0
         running_global_peak_date = datetime(2000, 1, 1).date()
         max_dd = 0 
         running_max_dd_date = datetime(2000, 1, 1).date()
 
+
         # compute stats for strategy 
-        for key, value in trade_log.items():
+        for key, value in single_results.items():
             if (value['strategy_code'] == strategy_code): 
 
                 total_positions += int(value['position_size'])
@@ -207,7 +221,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     exits[value['exit']] = 1
 
 
-        # merge all total_daily_pnls
+        # merge total_daily_pnls per strategy 
         for filename in os.listdir(strategy_code_path):
             if filename.endswith('.csv'):
                 
@@ -284,23 +298,16 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': format(float(max_dd), '.2f'), 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date.date(), 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
 
 
-
-    print (strategy_codes)
-
-
-    # finished looping through permutations 
-    df_log = pd.DataFrame.from_dict(trade_log, orient='index')
-    df_log.to_csv(strategy_path + '/single_results.csv')
-    
+    # save computed stats 
     df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
     df_curve.to_csv(strategy_path + '/results.csv')
     
     df_table = pd.DataFrame.from_dict(results_table, orient='index')
-    df_table.to_html(strategy_path + '/results_table.html')
-    print ()
     print (df_table)
+    df_table.to_html(strategy_path + '/results_table.html')
 
-    # Copy files
+
+    # Copy files for web 
     shutil.copyfile(path + '/util/web/d3.js', strategy_path + '/d3.js') 
     shutil.copyfile(path + '/util/web/index.html', strategy_path + '/index.html') 
     try:
