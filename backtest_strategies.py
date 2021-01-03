@@ -33,6 +33,36 @@ def make_dir(path):
         print ('Successfully created the directory %s ' % path)
 
 
+def derive_strategy_code(permutation, parameters):
+    strategy_code = '' 
+
+    if permutation['cheap_entry'] is not None: strategy_code += 'C'
+    if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
+    if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
+    if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
+    if permutation['min_vix_entry'] is not None: strategy_code += '_MIV_' + str(permutation['min_vix_entry'])
+    if permutation['max_vix_entry'] is not None: strategy_code += '_MAV_' + str(permutation['max_vix_entry'])
+    if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
+    if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
+    if permutation['pct_exit'] is not None: strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
+    if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
+    if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
+    if (len(parameters['deltatheta_exit']) > 1): strategy_code += '_DT_' + str(permutation['deltatheta_exit'])
+    code_tp = permutation['tp_exit']
+    if (code_tp is not None) and code_tp < 1: 
+        code_tp = int(code_tp * 100)
+    if (len(parameters['tp_exit']) > 1): strategy_code += '_P' + str(code_tp)
+    if (len(parameters['sl_exit']) > 1): strategy_code += '_L' + str(permutation['sl_exit'])
+    if (len(parameters['delta']) > 1): strategy_code += '_D_' + str(permutation['delta'])
+    
+    if strategy_code == '': 
+        strategy_code = 'X'
+    if strategy_code.startswith('_'): 
+        strategy_code = strategy_code[1:]
+    strategy_code = strategy_code.replace('None', 'X')
+    return (strategy_code)
+
+
 def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily_entry=False): 
 
     # create directories  
@@ -63,77 +93,41 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     results_table = collections.OrderedDict()
     
     i = 0 
-    j = 0 
+    j  = 0 
+
+    strategy_codes = []
     
     permutations = dict_product(parameters)
     for permutation in  permutations: 
         for k, v in permutation.items(): 
             if printalot: print(k, v)
-        
-        strategy_code = '' 
 
-        if permutation['cheap_entry'] is not None: strategy_code += 'C'
-        if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
-        if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
-        if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
-        if permutation['min_vix_entry'] is not None: strategy_code += '_MIV_' + str(permutation['min_vix_entry'])
-        if permutation['max_vix_entry'] is not None: strategy_code += '_MAV_' + str(permutation['max_vix_entry'])
-        if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
-        if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
-        if permutation['pct_exit'] is not None: strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
-        if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
-        if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
-        if (len(parameters['deltatheta_exit']) > 1): strategy_code += '_DT_' + str(permutation['deltatheta_exit'])
-        code_tp = permutation['tp_exit']
-        if (code_tp is not None) and code_tp < 1: 
-            code_tp = int(code_tp * 100)
-        if (len(parameters['tp_exit']) > 1): strategy_code += '_P' + str(code_tp)
-        if (len(parameters['sl_exit']) > 1): strategy_code += '_L' + str(permutation['sl_exit'])
-        if (len(parameters['delta']) > 1): strategy_code += '_D_' + str(permutation['delta'])
-        
-        if strategy_code == '': 
-            strategy_code = 'X'
-        if strategy_code.startswith('_'): 
-            strategy_code = strategy_code[1:]
-        strategy_code = strategy_code.replace('None', 'X')
-    
         if (strategy_name == 'bf70' or strategy_name == 'bf70_plus') and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
             if printalot: print('continue')
             continue
-
-        number_of_trades = 0
-        winners = 0 
-        allwinners = 0
-        allloosers = 0
-        maxwinner = 0 
-        loosers = 0
-        maxlooser = 0 
-        total_pnl = 0
-        total_risk = 0
-        exits = {}
-        total_dit = 0
-        total_daily_pnls = None 
-        total = risk_capital
-        total_positions = 0
         
-        running_global_peak = 0
-        running_global_peak_date = datetime(2000, 1, 1).date()
-        max_dd = 0 
-        running_max_dd_date = datetime(2000, 1, 1).date()
+        strategy_code = derive_strategy_code(permutation, parameters)
+        strategy_codes.append(strategy_code)
+    
+
+        # make dir for permutation 
+        strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
+        make_dir(strategy_code_path)
+
 
         # get entries, measure time 
-        starttiming = time.time()
+        starttime = time.time()
         if daily_entry: 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
-        endtiming = time.time()
-        print('time needed to get single entries: ' + str(endtiming - starttiming))
+        print('time needed to get single entries: ' + format(float(time.time() - starttime), '.2f'))
+        
 
         # loop through entries 
-        for e in range(len(single_entries)): 
+        number_of_trades = 0 
+        for entry in single_entries: 
         
-            entry = single_entries[e]
             entrydate = entry[0]
             expiration = entry[1]
 
@@ -157,19 +151,35 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 number_of_trades += 1
                 i += 1
 
-                # make dir and save dailypnls 
-                strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
-                make_dir(strategy_code_path)
+                # save dailypnls 
                 file_name = strategy_code_path + str(i) + '.csv'
                 result['dailypnls'].to_csv(file_name)
                 del result['dailypnls']
 
                 trade_log[i] = dict({'trade nr.' : number_of_trades, 'strategy_code': strategy_code}, **result)
                 print (trade_log[i])
-        # finished looping through entries 
 
 
-        # filter entries for strategy 
+        winners = 0 
+        allwinners = 0
+        allloosers = 0
+        maxwinner = 0 
+        loosers = 0
+        maxlooser = 0 
+        total_pnl = 0
+        total_risk = 0
+        exits = {}
+        total_dit = 0
+        total_daily_pnls = None 
+        total = risk_capital
+        total_positions = 0
+        
+        running_global_peak = 0
+        running_global_peak_date = datetime(2000, 1, 1).date()
+        max_dd = 0 
+        running_max_dd_date = datetime(2000, 1, 1).date()
+
+        # compute stats for strategy 
         for key, value in trade_log.items():
             if (value['strategy_code'] == strategy_code): 
 
@@ -272,6 +282,10 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
 
         results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': format(float(max_dd), '.2f'), 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date.date(), 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
+
+
+
+    print (strategy_codes)
 
 
     # finished looping through permutations 
