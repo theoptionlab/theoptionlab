@@ -13,7 +13,7 @@ import time
 import numpy as np
 import pandas as pd
 
-import run_strategies
+import run_strategy
 from util import entries
 from util import performance
 
@@ -63,42 +63,12 @@ def derive_strategy_code(permutation, parameters):
     return (strategy_code)
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily_entry=False): 
-
-    # create directories  
-    path = os.getcwd()
-    make_dir(path + '/results')
-    strategy_path = path + '/results/' + strategy_name 
-    if daily_entry: strategy_path += '_daily'
-    make_dir(strategy_path)
-    try: 
-        shutil.rmtree(strategy_path + '/daily_pnls')
-    except Exception as e:
-        print(e)
-    make_dir(strategy_path + '/daily_pnls')
-
-
-    if printalot: print ('strategy_name: ' + str(strategy_name))
-    if printalot: print ('risk_capital: ' + str(risk_capital))
-    if printalot: print ('underlying: ' + str(underlying))
-    if printalot: print ('start: ' + str(start))
-    if printalot: print ('end: ' + str(end))
-    if printalot: print ()
-
-    permutations = dict_product(parameters)
-    if printalot: print('number of combinations: ' + str(len(list(permutations))))
-
+def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital): 
+    
     trade_log = {}
-    equity_curve = collections.OrderedDict()
-    results_table = collections.OrderedDict()
-    
     i = 0 
-    j  = 0 
 
-    strategy_codes = []
-    
-    permutations = dict_product(parameters)
-    for permutation in  permutations: 
+    for permutation in permutations: 
         for k, v in permutation.items(): 
             if printalot: print(k, v)
 
@@ -108,7 +78,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         
         strategy_code = derive_strategy_code(permutation, parameters)
         strategy_codes.append(strategy_code)
-    
+
 
         # make dir for permutation 
         strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
@@ -145,7 +115,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                 
             # run with parameters 
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
-            result = run_strategies.fly(strategy, underlying, risk_capital, entrydate, expiration)
+            result = run_strategy.fly(strategy, underlying, risk_capital, entrydate, expiration)
 
             if (not result is None): 
                 number_of_trades += 1
@@ -163,6 +133,42 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     # finished looping, save trade_log 
     df_log = pd.DataFrame.from_dict(trade_log, orient='index')
     df_log.to_csv(strategy_path + '/single_results.csv')
+
+
+def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily_entry=False): 
+
+    # create directories  
+    path = os.getcwd()
+    make_dir(path + '/results')
+    strategy_path = path + '/results/' + strategy_name 
+    if daily_entry: strategy_path += '_daily'
+    make_dir(strategy_path)
+    try: 
+        shutil.rmtree(strategy_path + '/daily_pnls')
+    except Exception as e:
+        print(e)
+    make_dir(strategy_path + '/daily_pnls')
+
+
+    if printalot: print ('strategy_name: ' + str(strategy_name))
+    if printalot: print ('risk_capital: ' + str(risk_capital))
+    if printalot: print ('underlying: ' + str(underlying))
+    if printalot: print ('start: ' + str(start))
+    if printalot: print ('end: ' + str(end))
+    if printalot: print ()
+
+    permutations = dict_product(parameters)
+    if printalot: print('number of combinations: ' + str(len(list(permutations))))
+
+    equity_curve = collections.OrderedDict()
+    results_table = collections.OrderedDict()
+
+    j  = 0 
+
+    strategy_codes = []
+    
+    permutations = dict_product(parameters)
+    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital)
 
 
     # start with computing stats 
@@ -219,11 +225,16 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
                     exits[value['exit']] += 1
                 else:
                     exits[value['exit']] = 1
+                    
+        for key, value in exits.items():
+            if printalot: print(key + ' exit: \t' + str(value))
 
-
+        
         # merge total_daily_pnls per strategy 
+        number_of_trades = 0 
         for filename in os.listdir(strategy_code_path):
             if filename.endswith('.csv'):
+                number_of_trades += 1  
                 
                 daily_pnls = pd.read_csv(strategy_code_path + filename, parse_dates=['date'], index_col=['date'])
 
@@ -282,10 +293,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
         average_dit = int(total_dit / number_of_trades)
         average_position_size = format(float(total_positions / number_of_trades), '.2f')
         rod = format(float(average_percentage / (total_dit / number_of_trades)), '.2f')
-
-        if printalot: print()
-        for key, value in exits.items():
-            if printalot: print(key + ' exit: \t' + str(value))
             
         days = (end - start).days
         years = round((days / 365), 2)
