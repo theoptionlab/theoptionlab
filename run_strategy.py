@@ -3,6 +3,7 @@ from __future__ import division
 from datetime import timedelta, datetime 
 import pandas as pd
 import trading_calendars as tc
+import pytz
 
 from util import util
 
@@ -29,7 +30,8 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
                         
         combo = None
         
-        while ((xnys.is_session(pd.Timestamp(current_date)) == False) or (util.connector.query_midprice_underlying(underlying, current_date) is None)): 
+        while ((xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) is False) 
+               or (util.connector.query_midprice_underlying(underlying, current_date) is None)): 
             current_date = current_date + timedelta(days=1)
             if (current_date >= expiration) or (current_date >= datetime.now().date()): 
                 return None 
@@ -56,7 +58,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         print ("combo is None")
         return None 
 
-    entry_price = util.getEntryPrice(combo) # does not include commissions
+#     entry_price = util.getEntryPrice(combo) # does not include commissions
 
     # size up 
     min_exp = combo.getMinExpiration()
@@ -103,7 +105,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         if (current_date >= expiration) or (current_date >= datetime.now().date()): 
             flying = False 
 
-        if (xnys.is_session(pd.Timestamp(current_date)) == False): 
+        if (xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) == False): 
             continue   
 
         elif (util.connector.query_midprice_underlying(underlying, current_date) is None): 

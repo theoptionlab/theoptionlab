@@ -6,7 +6,6 @@ from datetime import datetime
 from datetime import timedelta 
 import itertools
 import os 
-import glob
 import shutil 
 import time
 
@@ -96,7 +95,9 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
 
         # loop through entries 
         number_of_trades = 0 
-        for entry in single_entries: 
+        for e in range(len(single_entries)): 
+
+            entry = single_entries[e]
         
             entrydate = entry[0]
             expiration = entry[1]

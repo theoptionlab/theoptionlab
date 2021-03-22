@@ -14,7 +14,7 @@ from util import util
 
 def precompute(table, computedate, underlying, include_riskfree):
     
-    start = time.time()
+#     start = time.time()
         
     db = psycopg2.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
     cur2 = db.cursor()
@@ -73,9 +73,9 @@ def precompute(table, computedate, underlying, include_riskfree):
         psycopg2.extras.execute_batch(cur2, """UPDATE """ + table + """ SET iv=%(iv)s, bs_price_bid_ask=%(bs_price_bid_ask)s, delta=%(delta)s, theta=%(theta)s, vega=%(vega)s WHERE id=%(rowid)s""", bulkrows, page_size=100)
         db.commit()
     
-        end = time.time() 
-        print (end - start)
-        print ()
+#         end = time.time() 
+#         print (end - start)
+#         print ()
                     
         db.close()
     

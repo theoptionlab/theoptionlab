@@ -6,10 +6,12 @@ from sqlalchemy import create_engine
 import os 
 import psycopg2 
 from util import util
-pd.options.mode.chained_assignment = None
 from datetime import datetime 
+from optiondata import precompute_greeks
+from optiondata import precompute_bs_price
 
-# vxx options since: 2010-05-28  
+pd.options.mode.chained_assignment = None
+
 
 startdates = {
   "^RUT": datetime(2004, 1, 2).date(),
@@ -20,7 +22,7 @@ startdates = {
   "VXX": datetime(2010, 5, 28).date()
 }
 
-def insert(underlyings, dir):
+def insert(underlyings, dir, precompute):
     
     print("insert: " + str(underlyings)) 
     print()
@@ -46,6 +48,7 @@ def insert(underlyings, dir):
                 datestring = file[index : (index + 10)]
                 
                 date = datetime.strptime(datestring, '%Y-%m-%d').date()
+                print (date)
 
                 
                 unzippedpath = "" 
@@ -85,6 +88,13 @@ def insert(underlyings, dir):
                                     dates.add(datestring)
                                     filtered.to_sql(table, engine, if_exists='append', index=False, chunksize=1000)
                                     db.commit()
+                
+                
+                # only if data hast been inserted, for all underlyings together 
+                if precompute:              
+                    precompute_bs_price.precompute("optiondata", date, "*", True)
+                    precompute_greeks.precompute("optiondata", date, "*", True)
+                    
                     
                 if ((unzippedpath != "") and (unzippedpath is not None)): 
                     os.remove(unzippedpath)

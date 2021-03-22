@@ -12,7 +12,7 @@ from util import util
 
 def precompute(table, computedate, underlying, include_riskfree):
     
-    start = time.time()
+#     start = time.time()
         
     db = psycopg2.connect(host="localhost", user=settings.db_username, password=settings.db_password, database="optiondata") 
     cur2 = db.cursor()
@@ -54,8 +54,10 @@ def precompute(table, computedate, underlying, include_riskfree):
             try: iv = implied_volatility.implied_volatility(mid_1545, underlying_mid_1545, int(strike), remaining_time_in_years, rf, option_type)
             except: iv = 0.001
             
+            if underlying_mid_1545 == 0: underlying_mid_1545 = 0.01
+            
             bs_price_bid_ask = black_scholes(option_type, underlying_mid_1545, strike, remaining_time_in_years, rf, iv)
-            print (bs_price_bid_ask)
+#             print (bs_price_bid_ask)
     
             bulkrows.append({'bs_price_bid_ask': bs_price_bid_ask, 'rowid': rowid}) 
                         
@@ -68,8 +70,8 @@ def precompute(table, computedate, underlying, include_riskfree):
             print(e)
             print (query)
     
-        end = time.time() 
-        print (end - start)
+#         end = time.time() 
+#         print (end - start)
         print ()
                     
         db.close()

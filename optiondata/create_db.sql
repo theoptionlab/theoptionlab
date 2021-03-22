@@ -34,6 +34,7 @@ CREATE TABLE optiondata (
   open_interest integer DEFAULT NULL,
   delivery_code varchar(100) DEFAULT NULL,
   iv decimal(65,30) DEFAULT NULL,
+  bs_price_bid_ask decimal DEFAULT NULL,
   delta decimal(65,30) DEFAULT NULL,
   theta decimal(65,30) DEFAULT NULL,
   vega decimal(65,30) DEFAULT NULL,
