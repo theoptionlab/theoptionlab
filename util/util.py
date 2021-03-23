@@ -599,7 +599,7 @@ def getDownDay(underlying, date, strategy=None):
     down_day = False 
         
     previous_date = date - timedelta(days=1)
-    while ((xnys.is_session(pd.Timestamp(previous_date)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None) or (connector.query_midprice_underlying(underlying, previous_date) == 0)): 
+    while ((xnys.is_session(pd.Timestamp(previous_date, tz=pytz.UTC)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None) or (connector.query_midprice_underlying(underlying, previous_date) == 0)): 
         previous_date = previous_date - timedelta(days=1)
                 
     underlying_midprice_current = connector.query_midprice_underlying(underlying, date)
