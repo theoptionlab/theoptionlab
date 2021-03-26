@@ -27,9 +27,9 @@ def make_dir(path):
     try:
         os.mkdir(path)
     except OSError:
-        print ('Creation of the directory %s failed' % path)
+        print ('Creating dir %s failed' % path)
     else:
-        print ('Successfully created the directory %s ' % path)
+        print ('Created dir %s ' % path)
 
 
 def derive_strategy_code(permutation, parameters):
@@ -62,7 +62,7 @@ def derive_strategy_code(permutation, parameters):
     return (strategy_code)
 
 
-def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital): 
+def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital, quantity): 
     
     trade_log = {}
     i = 0 
@@ -89,7 +89,9 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
         if daily_entry: 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
         else: 
-            single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'], True, False)
+            single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'])
+        print (single_entries)
+        print (len(single_entries))
         print('time needed to get single entries: ' + format(float(time.time() - starttime), '.2f'))
         
 
@@ -116,7 +118,7 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
                 
             # run with parameters 
             strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
-            result = run_strategy.fly(strategy, underlying, risk_capital, entrydate, expiration)
+            result = run_strategy.fly(strategy, underlying, risk_capital, quantity, entrydate, expiration)
 
             if (not result is None): 
                 number_of_trades += 1
@@ -136,7 +138,7 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
     df_log.to_csv(strategy_path + '/single_results.csv')
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start, end, parameters, daily_entry=False): 
+def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printalot, start, end, parameters, daily_entry=False): 
 
     # create directories  
     path = os.getcwd()
@@ -169,7 +171,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, printalot, start
     strategy_codes = []
     
     permutations = dict_product(parameters)
-    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital)
+    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital, quantity)
 
 
     # start with computing stats 
