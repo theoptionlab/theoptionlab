@@ -25,6 +25,7 @@ class MyDB(object):
         self.query(query)
         row = self._db_cur.fetchone()
         if row == None:
+            print (query)
             return None
         strike = row[0]
         return strike 
@@ -39,10 +40,16 @@ class MyDB(object):
         return strike 
     
     def select_entries(self, start_date, end_date, underlying_symbol):
-        query = "SELECT DISTINCT quote_date FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date >= '" + str(start_date) + "' AND quote_date <= '" + str(end_date) + "' ORDER BY quote_date;"
+        query = "SELECT DISTINCT quote_date FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND quote_date >= '" + str(start_date) + "'::date AND quote_date <= '" + str(end_date) + "'::date ORDER BY quote_date;"
         self.query(query) 
         entries = self._db_cur.fetchall()
         return entries
+    
+    def select_expirations(self, start_date, end_date, underlying_symbol):
+        query = "SELECT DISTINCT expiration FROM optiondata WHERE underlying_symbol = '" + underlying_symbol + "' AND expiration >= '" + str(start_date) + "'::date AND expiration <= '" + str(end_date) + "'::date ORDER BY expiration;"
+        self.query(query) 
+        row = self._db_cur.fetchall()
+        return row
 
     def select_expiration(self, quote_date, underlying_symbol, option_type, days, search_radius=50):
         if days < 0: 
@@ -134,8 +141,11 @@ class MyDB(object):
         maxdate = row[0]
         return maxdate 
 
-    def check_exists(self, underlying, expiration):
-        query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND expiration = '" + str(expiration) + "')"
+    def check_exists(self, underlying, expiration, quote_date = None):
+        if quote_date == None:
+            query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND expiration = '" + str(expiration) + "')"
+        else:
+            query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "')"
         self.query(query)
         row = self._db_cur.fetchone()
         return row[0]
