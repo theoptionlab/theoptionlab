@@ -10,7 +10,7 @@ from util import util
 xnys = tc.get_calendar("XNYS")
 
 
-def fly(strategy, underlying, risk_capital, entrydate, expiration): 
+def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration): 
 
     flying = True 
     daily_pnls_dict = {}
@@ -58,9 +58,7 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
         print ("combo is None")
         return None 
 
-#     entry_price = util.getEntryPrice(combo) # does not include commissions
-
-    # size up 
+    # scale up 
     min_exp = combo.getMinExpiration()
     if min_exp is None:
         return None 
@@ -69,11 +67,16 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
     if position_size == 0: 
         print ("Too little capital. Minimum required: " + str(abs(min_exp)))
         return None 
+    
+    # set fixed quantity 
+    if quantity != None:
+        position_size = quantity
         
     positions = combo.getPositions()
     for position in positions: 
         position.amount = position.amount * position_size
     min_exp = min_exp * position_size
+    
     
     entry_date = current_date 
     entry_price = util.getEntryPrice(combo) 
@@ -143,4 +146,4 @@ def fly(strategy, underlying, risk_capital, entrydate, expiration):
             daily_pnls.sort_index(inplace=True)
             daily_pnls.columns = ['pnl']
 
-            return {'entry_date': entry_date, 'expiration': expiration, 'exit_date': current_date, 'entry_underlying': entry_underlying, 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'entry_price': format(float(entry_price / position_size), '.2f'), 'dte' : dte, 'dit' : dit, 'pnl': float(format(float(current_pnl), '.2f')), 'dailypnls' : daily_pnls, 'max_risk' : float(format(float(min_exp), '.2f')), 'position_size' : position_size, 'percentage': str(format(float(round((float(current_pnl) / abs(min_exp)) * 100, 2)), '.2f')) + '%', 'exit': exit_criterion}
+            return {'entry_date': entry_date, 'expiration': expiration, 'exit_date': current_date, 'entry_underlying': str(format(float(entry_underlying), '.2f')), 'entry_vix': entry_vix, 'strikes': strikes, 'iv_legs': iv_legs, 'entry_price': str(format(float(entry_price / position_size), '.2f')), 'dte' : dte, 'dit' : dit, 'pnl': str(format(float(current_pnl), '.2f')), 'dailypnls' : daily_pnls, 'max_risk' : str(format(float(min_exp), '.2f')), 'position_size' : position_size, 'percentage': str(format(float(round((float(current_pnl) / abs(min_exp)) * 100, 2)), '.2f')) + '%', 'exit': exit_criterion}
