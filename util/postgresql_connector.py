@@ -141,8 +141,8 @@ class MyDB(object):
         maxdate = row[0]
         return maxdate 
 
-    def check_exists(self, underlying, expiration, quote_date = None):
-        if quote_date == None:
+    def check_expiration(self, underlying, expiration, quote_date=None):
+        if expiration == None:
             query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND expiration = '" + str(expiration) + "')"
         else:
             query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(expiration) + "')"
@@ -150,6 +150,12 @@ class MyDB(object):
         row = self._db_cur.fetchone()
         return row[0]
 
+    def check_entry(self, underlying, quote_date):
+        query = "SELECT EXISTS(SELECT 1 FROM optiondata WHERE underlying_symbol = '" + underlying + "' AND quote_date = '" + str(quote_date) + "')"
+        self.query(query)
+        row = self._db_cur.fetchone()
+        return row[0]
+    
     def query_expiration_before(self, underlying_symbol, strike, option_type, quote_date, later_expiration, budget):
         query = "SELECT expiration FROM optiondata WHERE quote_date = '" + str(quote_date) + "' AND underlying_symbol = '" + underlying_symbol + "' AND expiration > '" + str(quote_date) + "' AND expiration < '" + str(later_expiration) + "' AND option_type = '" + str(option_type) + "' AND strike = '" + str(strike) + "' AND mid_1545 <= " + str(budget) + " AND mid_1545 != 0 ORDER BY expiration DESC LIMIT 1"
         self.query(query)
