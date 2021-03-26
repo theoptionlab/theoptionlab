@@ -1,13 +1,8 @@
-import calendar
 from datetime import timedelta
 
-from dateutil.relativedelta import relativedelta
-from pandas.tseries.offsets import BMonthEnd
+import pandas as pd 
 from util import util 
 import collections 
-
-c = calendar.Calendar(firstweekday=calendar.SUNDAY)
-offset = BMonthEnd()
 
 
 def is_third_friday_or_saturday(d):
@@ -27,9 +22,9 @@ def getEntries(underlying, start, end, days):
         if is_third_friday_or_saturday(expiration): 
             entrydate =  expiration - timedelta(days) 
         
-            # try for seven days
+            # try for some days
             tries = 0
-            while (not util.connector.check_exists(underlying, expiration, entrydate) and tries < 5): 
+            while (not util.connector.check_expiration(underlying, expiration, entrydate) and tries < 5): 
                 entrydate = entrydate + timedelta(days=1)
                 tries+=1
             
@@ -57,43 +52,29 @@ def getDailyEntries(underlying, start, end, days):
 
 
 
-# only regular options at the moment 
-def getNextEntry(underlying, refDate, days):
-            
-    running = True
-    current_date = refDate
+def getSMSEntries(underlying, start, end, days):
     
-    nextEntry = {}
+    entries = {}
     
-    while running:
+    raw_entry_dates = pd.date_range(start, end, freq='SMS') # SemiMonthBegin 
+
+    for entry_date in raw_entry_dates: 
         
-        year = current_date.year
-        month = current_date.month
-        monthcal = c.monthdatescalendar(year, month)
-        third_friday = [day for week in monthcal for day in week if day.weekday() == calendar.FRIDAY and day.month == month][2]
+        if (entry_date.weekday() != 0): 
+            entry_date = entry_date + timedelta(days=(7 - entry_date.weekday())) # Next Monday 
+        entry_date = entry_date.date()
         
-                        
-        nextExpiration = third_friday
-        exists = util.connector.check_exists(underlying, third_friday)
-
-        if (exists == 0):  # "expiration not found"
-            third_saturday = third_friday + timedelta(days=1)
-            exists = util.connector.check_exists(underlying, third_saturday)
-            if (exists == 0): 
-                break;
+        # try for some days
+        tries = 0
+        while (not util.connector.check_entry(underlying, entry_date) and tries < 3): 
+            entry_date = entry_date + timedelta(days=1)
+            tries+=1
             
-            else: 
-                nextExpiration = third_saturday    
+        expiration = util.connector.select_expiration(entry_date, underlying, "p", days, 40)
+        if expiration is not None: 
+            entries[entry_date] = expiration
 
-        dte = (nextExpiration - refDate).days
-
-        if dte >= days: 
-            running = False  
-            
-        else: 
-            nextEntry['expiration'] = nextExpiration
-
-        current_date += relativedelta(months=1)
-
-    return nextEntry 
+    ordered_entries = collections.OrderedDict(sorted(entries.items(), key=lambda x:x[1], reverse=False))   
+    single_entries = list(ordered_entries.items())
+    return single_entries 
 
