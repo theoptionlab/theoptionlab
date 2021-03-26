@@ -62,7 +62,7 @@ def derive_strategy_code(permutation, parameters):
     return (strategy_code)
 
 
-def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital, quantity): 
+def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity): 
     
     trade_log = {}
     i = 0 
@@ -86,13 +86,15 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
 
         # get entries, measure time 
         starttime = time.time()
-        if daily_entry: 
+        if frequency_string == 'B': 
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
+        if frequency_string == 'SMS': 
+            single_entries = entries.getSMSEntries(underlying, start, end, permutation['dte_entry'])
         else: 
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'])
-        print (single_entries)
+
         print (len(single_entries))
-        print('time needed to get single entries: ' + format(float(time.time() - starttime), '.2f'))
+        print('time needed to get entries: ' + format(float(time.time() - starttime), '.2f'))
         
 
         # loop through entries 
@@ -138,13 +140,13 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
     df_log.to_csv(strategy_path + '/single_results.csv')
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printalot, start, end, parameters, daily_entry=False): 
+def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printalot, start, end, parameters, frequency_string=None): 
 
     # create directories  
     path = os.getcwd()
     make_dir(path + '/results')
     strategy_path = path + '/results/' + strategy_name 
-    if daily_entry: strategy_path += '_daily'
+    if frequency_string is not None: strategy_path += '_' + frequency_string
     make_dir(strategy_path)
     try: 
         shutil.rmtree(strategy_path + '/daily_pnls')
@@ -171,7 +173,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printa
     strategy_codes = []
     
     permutations = dict_product(parameters)
-    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, daily_entry, underlying, start, end, strategy, risk_capital, quantity)
+    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity)
 
 
     # start with computing stats 
