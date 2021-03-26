@@ -12,12 +12,12 @@ printalot = True
 start = datetime(2006, 11, 1).date()
 end = datetime(2021, 4, 1).date()
 
-daily_entry = False 
+frequency_string = None 
 quantity = None 
 
-backtest_strategies.backtest(bf70.bf70(), "^RUT", "bf70", 100000, quantity, printalot, start, end, bf70.parameters, daily_entry)
-backtest_strategies.backtest(the_bull.bull(), "^RUT", "the_bull", 100000, quantity, printalot, start, end, the_bull.parameters, daily_entry)
-backtest_strategies.backtest(netzero.netzero(), "^RUT", "netzero", 100000, quantity, printalot, start, end, netzero.parameters, daily_entry)
+backtest_strategies.backtest(bf70.bf70(), "^RUT", "bf70", 100000, quantity, printalot, start, end, bf70.parameters, frequency_string)
+backtest_strategies.backtest(the_bull.bull(), "^RUT", "the_bull", 100000, quantity, printalot, start, end, the_bull.parameters, frequency_string)
+backtest_strategies.backtest(netzero.netzero(), "^RUT", "netzero", 100000, quantity, printalot, start, end, netzero.parameters, frequency_string)
 
 print()
 print("--- %s seconds ---" % (time.time() - start_time))
