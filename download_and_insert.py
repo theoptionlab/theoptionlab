@@ -3,10 +3,10 @@ from private import download_data
 from private import settings
 
 
-download_data.download(settings.data_dir) 
+# download_data.download(settings.data_dir) 
 
-
-symbols = ["^RUT", "^SPX",] #" ^VIX", "SPLV", "SPHB", "VXX"
+symbols = ["^VIX"] 
+# symbols = ["^RUT", "^SPX"] #" ^VIX", "SPLV", "SPHB", "VXX"
 precompute = True 
 
 # insert all data from the directory specified in the path. 
