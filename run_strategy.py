@@ -96,7 +96,12 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
             iv_legs = iv_legs + format(float(iv), '.2f')
         else: iv_legs = iv_legs + "x"
     
+    
     entry_vix = util.connector.query_midprice_underlying("^VIX", entry_date) 
+    if ((strategy.min_vix_entry is not None) and (entry_vix < strategy.min_vix_entry)): 
+        print ("VIX below minimum VIX")
+        return None 
+    
     entry_underlying = util.connector.query_midprice_underlying(underlying, entry_date) 
     
     
