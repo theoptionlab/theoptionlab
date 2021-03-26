@@ -48,3 +48,4 @@ CREATE INDEX idx_iv ON optiondata USING btree (iv);
 CREATE INDEX idx_mid_1545 ON optiondata USING btree (mid_1545);
 CREATE INDEX idx_type ON optiondata USING btree (option_type);
 CREATE INDEX idx_underlying ON optiondata USING btree (underlying_symbol);
+CREATE INDEX idx_root ON optiondata USING btree (root);
