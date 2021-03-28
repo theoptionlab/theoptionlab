@@ -61,7 +61,7 @@ class Strategy(object):
         self.sl_exit = sl_exit
         self.delta = delta
 
-    def setParameters(self, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
+    def setParameters(self, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, min_iv_entry, max_iv_entry, sma_window, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
         
         self.patient_days_before = patient_days_before 
         self.patient_days_after = patient_days_after 
@@ -70,6 +70,9 @@ class Strategy(object):
         self.patient_entry = patient_entry
         self.min_vix_entry = min_vix_entry
         self.max_vix_entry = max_vix_entry
+        self.min_iv_entry = min_iv_entry
+        self.max_iv_entry = max_iv_entry
+        self.sma_window = sma_window
         self.dte_entry = dte_entry
         self.els_entry = els_entry
         self.ew_exit = ew_exit

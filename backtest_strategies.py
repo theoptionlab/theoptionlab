@@ -39,8 +39,11 @@ def derive_strategy_code(permutation, parameters):
     if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
     if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
     if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
-    if permutation['min_vix_entry'] is not None: strategy_code += '_MIV_' + str(permutation['min_vix_entry'])
-    if permutation['max_vix_entry'] is not None: strategy_code += '_MAV_' + str(permutation['max_vix_entry'])
+    if permutation['min_vix_entry'] is not None: strategy_code += '_X_' + str(permutation['min_vix_entry'])
+    if permutation['max_vix_entry'] is not None: strategy_code += '_X<_' + str(permutation['max_vix_entry'])
+    if permutation['min_iv_entry'] is not None: strategy_code += '_I_' + str(int(permutation['min_iv_entry'] * 100))
+    if permutation['max_iv_entry'] is not None: strategy_code += '_I_' + str(int(permutation['max_iv_entry'] * 100))
+    if permutation['sma_window'] is not None: strategy_code += '_A' + str(permutation['sma_window'])
     if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
     if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
     if permutation['pct_exit'] is not None: strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
@@ -119,7 +122,11 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
                     continue
                 
             # run with parameters 
-            strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], permutation['min_vix_entry'], permutation['max_vix_entry'], permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
+            strategy.setParameters(permutation['patient_days_before'], permutation['patient_days_after'], permutation['cheap_entry'], permutation['down_day_entry'], permutation['patient_entry'], 
+                                   permutation['min_vix_entry'], permutation['max_vix_entry'], 
+                                   permutation['min_iv_entry'], permutation['max_iv_entry'], 
+                                   permutation['sma_window'], 
+                                   permutation['dte_entry'], permutation['els_entry'], permutation['ew_exit'], permutation['pct_exit'], permutation['dte_exit'], permutation['dit_exit'], permutation['deltatheta_exit'], permutation['tp_exit'], permutation['sl_exit'], permutation['delta'])
             result = run_strategy.fly(strategy, underlying, risk_capital, quantity, entrydate, expiration)
 
             if (not result is None): 
@@ -146,7 +153,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printa
     path = os.getcwd()
     make_dir(path + '/results')
     strategy_path = path + '/results/' + strategy_name 
-    if frequency_string is not None: strategy_path += '_' + frequency_string
+    if frequency_string == "B": strategy_path += '_daily'
     make_dir(strategy_path)
     try: 
         shutil.rmtree(strategy_path + '/daily_pnls')

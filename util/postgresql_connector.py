@@ -125,6 +125,15 @@ class MyDB(object):
             return None
         return float(row[0])
     
+    def query_sma(self, underlying_symbol, quote_date, interval): 
+        query = "SELECT MAX(underlying_mid_1545) FROM optiondata WHERE underlying_symbol = '" + str(underlying_symbol) + "' AND quote_date <= '" + str(quote_date) + "' AND quote_date >= '" + str(quote_date) + "'::date - interval '" + str(interval) + " days' GROUP BY quote_date ORDER BY quote_date"
+        self.query(query)
+        row = self._db_cur.fetchall()
+        if row == None:
+            return None
+        return row
+
+
     def query_midprice(self, quote_date, option, printalot=False): 
         if quote_date == None: quote_date = self.query_maxdate()
         query = "SELECT mid_1545 FROM optiondata WHERE mid_1545 != 0 AND underlying_symbol = '" + option.underlying + "' AND quote_date = '" + str(quote_date) + "' AND expiration = '" + str(option.expiration) + "' AND strike = '" + str(option.strike) + "' AND option_type = '" + option.type + "'"    

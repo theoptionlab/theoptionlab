@@ -93,6 +93,10 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
         if iv_legs != "": iv_legs = iv_legs + "/"
         if position is not None: 
             iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
+            if ((strategy.min_iv_entry is not None) and (iv < strategy.min_iv_entry)): 
+                print ("IV below minimum IV")
+                return None 
+            
             iv_legs = iv_legs + format(float(iv), '.2f')
         else: iv_legs = iv_legs + "x"
     
@@ -104,6 +108,16 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
     
     entry_underlying = util.connector.query_midprice_underlying(underlying, entry_date) 
     
+    if (strategy.sma_window is not None):
+        sma_results = util.connector.query_sma(underlying, entry_date, strategy.sma_window) 
+        sma_sum = 0
+        for sma_result in sma_results:
+            sma_sum += sma_result[0]
+        sma = sma_sum / len(sma_results)
+        if (entry_underlying < sma): 
+            print ("entry_underlying < sma")
+            return None 
+        
     
     # loop to check exit for each day 
     while flying:  
