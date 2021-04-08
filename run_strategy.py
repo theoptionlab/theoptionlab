@@ -114,8 +114,8 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
         for sma_result in sma_results:
             sma_sum += sma_result[0]
         sma = sma_sum / len(sma_results)
-        if (entry_underlying < sma): 
-            print ("entry_underlying < sma")
+        if (entry_underlying > sma): 
+            print ("entry_underlying > sma")
             return None 
         
     
