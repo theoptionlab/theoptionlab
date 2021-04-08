@@ -24,7 +24,7 @@ def annualized_sharpe_ratio(er, returns, rf):
 
 
 def sortino_ratio(er, returns, rf, target=0):
-    return (er - rf) / math.sqrt(lpm(returns, target, 2))
+    return (er - rf) / math.sqrt(lpm(returns, target, 2)) if math.sqrt(lpm(returns, target, 2)) else 0
 
 
 def annualized_sortino_ratio(er, returns, rf, target=0):
