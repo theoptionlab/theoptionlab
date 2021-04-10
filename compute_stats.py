@@ -15,11 +15,16 @@ from util import performance
 import trading_calendars as tc
 xnys = tc.get_calendar("XNYS")
 
-def list_strategies(path):
-    return [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+def list_strategies(path, underlying):
+    list = [] 
+    for dir in os.listdir(path): 
+        if os.path.isdir(os.path.join(path, dir)): 
+            list.append(dir)
+    list.append(list.pop(list.index(underlying.replace("^",""))))
+    return list 
+            
 
-
-def compute_stats(strategy_name, risk_capital, exclude=[]):
+def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
 
     # start with computing stats 
     equity_curve = collections.OrderedDict()
@@ -32,7 +37,7 @@ def compute_stats(strategy_name, risk_capital, exclude=[]):
     single_results = df.to_dict(orient='index')
     
     dailypnls_path = strategy_path + '/daily_pnls/' 
-    for strategy_code in list_strategies(dailypnls_path):
+    for strategy_code in list_strategies(dailypnls_path, underlying):
         print (strategy_code)
         
         if (strategy_code not in exclude): 
