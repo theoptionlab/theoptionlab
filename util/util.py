@@ -38,6 +38,8 @@ yeartradingdays = 252
 min_value = 1 
 max_value = 100000
 
+printalot = True 
+
 
 class Strategy(object): 
     
@@ -95,8 +97,41 @@ class Strategy(object):
     
     def checkExit(self):
         return False
-      
-      
+    
+    
+def derive_strategy_code(permutation, parameters):
+    strategy_code = '' 
+
+    if permutation['cheap_entry'] is not None: strategy_code += 'C'
+    if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
+    if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
+    if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
+    if permutation['min_vix_entry'] is not None: strategy_code += '_X_' + str(permutation['min_vix_entry'])
+    if permutation['max_vix_entry'] is not None: strategy_code += '_X<_' + str(permutation['max_vix_entry'])
+    if permutation['min_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['min_iv_entry'] * 100))
+    if permutation['max_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['max_iv_entry'] * 100))
+    if permutation['sma_window'] is not None: strategy_code += '_A' + str(permutation['sma_window'])
+    if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
+    if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
+    if ((len(parameters['pct_exit']) > 1) and permutation['pct_exit'] is not None): strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
+    if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
+    if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
+    if (len(parameters['deltatheta_exit']) > 1): strategy_code += '_DT_' + str(permutation['deltatheta_exit'])
+    code_tp = permutation['tp_exit']
+    if (code_tp is not None) and code_tp < 1: 
+        code_tp = int(code_tp * 100)
+    if (len(parameters['tp_exit']) > 1): strategy_code += '_P' + str(code_tp)
+    if (len(parameters['sl_exit']) > 1): strategy_code += '_L' + str(permutation['sl_exit'])
+    if (len(parameters['delta']) > 1): strategy_code += '_D_' + str(permutation['delta'])
+    
+    if strategy_code == '': 
+        strategy_code = 'X'
+    if strategy_code.startswith('_'): 
+        strategy_code = strategy_code[1:]
+    strategy_code = strategy_code.replace('None', 'X')
+    return (strategy_code)
+
+
 class Option():
 
     def __init__(self, entry_date, underlying, strike, expiration, sort):
@@ -177,8 +212,6 @@ class Strangle(Combo):
         self.callposition = callposition
         self.positions = self.putposition, self.callposition 
         
-#     def getPositions(self):
-#         return self.positions
     
     
 class IronButterfly(Combo):
