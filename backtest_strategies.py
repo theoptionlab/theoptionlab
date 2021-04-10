@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
-import collections
 from datetime import datetime
 from datetime import timedelta 
 import itertools
@@ -9,14 +8,12 @@ import os
 import shutil 
 import time
 
-import numpy as np
 import pandas as pd
 
 import run_strategy
 
 from util import util
 from util import entries
-from util import performance
 
 import trading_calendars as tc
 import pytz
@@ -38,60 +35,26 @@ def make_dir(path):
         print ('Created dir %s ' % path)
 
 
-def derive_strategy_code(permutation, parameters):
-    strategy_code = '' 
-
-    if permutation['cheap_entry'] is not None: strategy_code += 'C'
-    if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
-    if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
-    if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
-    if permutation['min_vix_entry'] is not None: strategy_code += '_X_' + str(permutation['min_vix_entry'])
-    if permutation['max_vix_entry'] is not None: strategy_code += '_X<_' + str(permutation['max_vix_entry'])
-    if permutation['min_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['min_iv_entry'] * 100))
-    if permutation['max_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['max_iv_entry'] * 100))
-    if permutation['sma_window'] is not None: strategy_code += '_A' + str(permutation['sma_window'])
-    if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
-    if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
-    if ((len(parameters['pct_exit']) > 1) and permutation['pct_exit'] is not None): strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
-    if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
-    if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
-    if (len(parameters['deltatheta_exit']) > 1): strategy_code += '_DT_' + str(permutation['deltatheta_exit'])
-    code_tp = permutation['tp_exit']
-    if (code_tp is not None) and code_tp < 1: 
-        code_tp = int(code_tp * 100)
-    if (len(parameters['tp_exit']) > 1): strategy_code += '_P' + str(code_tp)
-    if (len(parameters['sl_exit']) > 1): strategy_code += '_L' + str(permutation['sl_exit'])
-    if (len(parameters['delta']) > 1): strategy_code += '_D_' + str(permutation['delta'])
-    
-    if strategy_code == '': 
-        strategy_code = 'X'
-    if strategy_code.startswith('_'): 
-        strategy_code = strategy_code[1:]
-    strategy_code = strategy_code.replace('None', 'X')
-    return (strategy_code)
-
-
-def run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity): 
+def run_strategies(permutations, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity, include_underlying = False): 
     
     trade_log = {}
     i = 0 
 
     for permutation in permutations: 
         for k, v in permutation.items(): 
-            if printalot: print(k, v)
+            if util.printalot: print(k, v)
 
         if (strategy_name == 'bf70' or strategy_name == 'bf70_plus') and (permutation['cheap_entry'] == None) and (permutation['down_day_entry'] == False) and (permutation['patient_entry'] == True): 
-            if printalot: print('continue')
+            if util.printalot: print('continue')
             continue
         
-        strategy_code = derive_strategy_code(permutation, parameters)
+        strategy_code = util.derive_strategy_code(permutation, parameters)
+        print (strategy_code)
         strategy_codes.append(strategy_code)
-
 
         # make dir for permutation 
         strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
         make_dir(strategy_code_path)
-
 
         # get entries, measure time 
         starttime = time.time()
@@ -147,62 +110,77 @@ def run_strategies(permutations, printalot, strategy_name, parameters, strategy_
                 trade_log[i] = dict({'trade nr.' : number_of_trades, 'strategy_code': strategy_code}, **result)
                 print (trade_log[i])
 
-    # create results file for underlying   
-    underlying_daily_pnls_dict = {}
-    underlying_date = start
-    underlying_multiplier = None 
-    underlying_at_entry = None
-    entry_vix = None 
-    previouspnl = 0 
-    
-    while (underlying_date <= end):
-    
-        while ((xnys.is_session(pd.Timestamp(underlying_date, tz=pytz.UTC)) is False) 
-               or (util.connector.query_midprice_underlying(underlying, underlying_date) is None)): 
-               
+    if (include_underlying): 
+        # create results file for underlying   
+        underlying_daily_pnls_dict = {}
+        underlying_date = start
+        underlying_multiplier = None 
+        underlying_at_entry = None
+        entry_vix = None 
+        previouspnl = 0 
+        
+        while (underlying_date <= end):
+        
+            while ((xnys.is_session(pd.Timestamp(underlying_date, tz=pytz.UTC)) is False) 
+                   or (util.connector.query_midprice_underlying(underlying, underlying_date) is None)): 
+                   
+                underlying_date = underlying_date + timedelta(days=1)
+                if (underlying_date >= end) or (underlying_date >= datetime.now().date()): 
+                    break
+                    
+            underlying_midprice = util.connector.query_midprice_underlying(underlying, underlying_date)
+            if underlying_midprice != 0: 
+            
+                if underlying_multiplier is None:
+                    underlying_start_date = underlying_date
+                    underlying_at_entry = underlying_midprice
+                    underlying_multiplier = (risk_capital / underlying_midprice)
+                    entry_vix = util.connector.query_midprice_underlying("^VIX", underlying_date) 
+                
+                
+                current_pnl = (underlying_multiplier * underlying_midprice) - risk_capital
+                if current_pnl != None:             
+                    underlying_daily_pnls_dict[underlying_date] = format(float(current_pnl - previouspnl), '.2f') 
+                    previouspnl = current_pnl
+                    
             underlying_date = underlying_date + timedelta(days=1)
-            if (underlying_date >= end) or (underlying_date >= datetime.now().date()): 
-                break
-                
-        underlying_midprice = util.connector.query_midprice_underlying(underlying, underlying_date)
-        if underlying_midprice != 0: 
-        
-            if underlying_multiplier is None:
-                underlying_at_entry = underlying_midprice
-                underlying_multiplier = (risk_capital / underlying_midprice)
-                entry_vix = util.connector.query_midprice_underlying("^VIX", underlying_date) 
             
             
-            current_pnl = (underlying_multiplier * underlying_midprice) - risk_capital
-            if current_pnl != None:             
-                underlying_daily_pnls_dict[underlying_date] = format(float(current_pnl - previouspnl), '.2f') 
-                previouspnl = current_pnl
-                
-        underlying_date = underlying_date + timedelta(days=1)
+        underlying_daily_pnls = pd.DataFrame.from_dict(underlying_daily_pnls_dict, orient='index')
+        underlying_daily_pnls = underlying_daily_pnls.reindex(underlying_daily_pnls.index.rename('date'))
+        underlying_daily_pnls.index = pd.to_datetime(underlying_daily_pnls.index)
+        underlying_daily_pnls.sort_index(inplace=True)
+        underlying_daily_pnls.columns = ['pnl']
         
+        underlying_strategy_code_path = strategy_path + '/daily_pnls/' + str(underlying.replace("^","")) + "/"
+        make_dir(underlying_strategy_code_path)
+        underlying_file_name = underlying_strategy_code_path + 'underlying.csv'
+        underlying_daily_pnls.to_csv(underlying_file_name)
+        strategy_codes.append(str(underlying.replace("^","")))
         
-    underlying_daily_pnls = pd.DataFrame.from_dict(underlying_daily_pnls_dict, orient='index')
-    underlying_daily_pnls = underlying_daily_pnls.reindex(underlying_daily_pnls.index.rename('date'))
-    underlying_daily_pnls.index = pd.to_datetime(underlying_daily_pnls.index)
-    underlying_daily_pnls.sort_index(inplace=True)
-    underlying_daily_pnls.columns = ['pnl']
-    
-    underlying_strategy_code_path = strategy_path + '/daily_pnls/' + str(underlying.replace("^","")) + "/"
-    make_dir(underlying_strategy_code_path)
-    underlying_file_name = underlying_strategy_code_path + 'underlying.csv'
-    underlying_daily_pnls.to_csv(underlying_file_name)
-    strategy_codes.append(str(underlying.replace("^","")))
-    
-    # save underlying to trade_log
-    trade_log[i+1] = dict({'trade nr.' : number_of_trades+1, 'strategy_code': str(underlying.replace("^","")), 'entry_date': start, 'expiration': None, 'exit_date': end, 'entry_underlying': str(format(float(underlying_at_entry), '.2f')), 'entry_vix': entry_vix, 'strikes': None, 'iv_legs': None, 'entry_price': str(format(float(risk_capital), '.2f')), 'dte' : 0, 'dit' : (end - start).days, 'pnl': str(format(float(current_pnl), '.2f')), 'dailypnls' : None, 'max_risk' : str(format(float(risk_capital), '.2f')), 'position_size' : underlying_multiplier, 'percentage': str(format(float(round((float(current_pnl) / risk_capital) * 100, 2)), '.2f')) + '%', 'exit': None})
+        # save underlying to trade_log
+        trade_log[i+1] = dict({'trade nr.' : number_of_trades+1, 'strategy_code': str(underlying.replace("^","")), 'entry_date': underlying_start_date, 'expiration': None, 'exit_date': underlying_date, 'entry_underlying': str(format(float(underlying_at_entry), '.2f')), 'entry_vix': entry_vix, 'strikes': None, 'iv_legs': None, 'entry_price': str(format(float(risk_capital), '.2f')), 'dte' : 0, 'dit' : (end - start).days, 'pnl': str(format(float(current_pnl), '.2f')), 'dailypnls' : None, 'max_risk' : str(format(float(risk_capital), '.2f')), 'position_size' : underlying_multiplier, 'percentage': str(format(float(round((float(current_pnl) / risk_capital) * 100, 2)), '.2f')) + '%', 'exit': None})
 
     # finished looping, save trade_log 
     df_log = pd.DataFrame.from_dict(trade_log, orient='index')
     df_log.to_csv(strategy_path + '/single_results.csv')
+        
+        
+def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start, end, parameters, frequency_string=None, include_underlying=False): 
 
-
-def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printalot, start, end, parameters, frequency_string=None): 
-
+    if util.printalot: print ('strategy_name: ' + str(strategy_name))
+    if util.printalot: print ('risk_capital: ' + str(risk_capital))
+    if util.printalot: print ('underlying: ' + str(underlying))
+    if util.printalot: print ('start: ' + str(start))
+    if util.printalot: print ('end: ' + str(end))
+    if util.printalot: print ()
+    
+    # prepare 
+    if util.printalot: print('number of combinations: ' + str(len(list(dict_product(parameters)))))
+    permutations = dict_product(parameters)
+    
+    strategy_codes = []
+    
     # create directories  
     path = os.getcwd()
     make_dir(path + '/results')
@@ -214,179 +192,6 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, printa
     except Exception as e:
         print(e)
     make_dir(strategy_path + '/daily_pnls')
-
-
-    if printalot: print ('strategy_name: ' + str(strategy_name))
-    if printalot: print ('risk_capital: ' + str(risk_capital))
-    if printalot: print ('underlying: ' + str(underlying))
-    if printalot: print ('start: ' + str(start))
-    if printalot: print ('end: ' + str(end))
-    if printalot: print ()
-
-    permutations = dict_product(parameters)
-    if printalot: print('number of combinations: ' + str(len(list(permutations))))
-
-    equity_curve = collections.OrderedDict()
-    results_table = collections.OrderedDict()
-
-    j  = 0 
-
-    strategy_codes = []
-    permutations = dict_product(parameters)
     
-    run_strategies(permutations, printalot, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity)
+    run_strategies(permutations, strategy_name, parameters, strategy_codes, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity, include_underlying)
 
-
-    # start with computing stats 
-    df = pd.read_csv(strategy_path + '/single_results.csv') 
-    single_results = df.to_dict(orient='index')
-
-    for strategy_code in strategy_codes: 
-        print (strategy_code)
-
-        strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
-
-        exits = {} 
-        total_positions = 0
-        total_risk = 0
-        total_pnl = 0
-        winners = 0 
-        allwinners = 0
-        allloosers = 0
-        maxwinner = 0 
-        loosers = 0
-        maxlooser = 0 
-        total_dit = 0
-
-        total_daily_pnls = None 
-        total = risk_capital
-        running_global_peak = 0
-        running_global_peak_date = datetime(2000, 1, 1).date()
-        max_dd = 0 
-        running_max_dd_date = datetime(2000, 1, 1).date()
-
-        # compute stats for strategy 
-        for key, value in single_results.items():
-            if (value['strategy_code'] == strategy_code):
-
-                total_positions += int(value['position_size'])
-                
-                total_risk += value['max_risk']
-                total_pnl += value['pnl'] 
-                if value['pnl']  >= 0: 
-                    allwinners += value['pnl'] 
-                    winners += 1
-                    if value['pnl']  > maxwinner: 
-                        maxwinner = value['pnl']  
-
-                else: 
-                    allloosers += value['pnl'] 
-                    loosers += 1 
-                    if value['pnl'] < maxlooser: 
-                        maxlooser = value['pnl'] 
-
-                total_dit += value['dit']
-
-                if value['exit'] in exits: 
-                    exits[value['exit']] += 1
-                else:
-                    exits[value['exit']] = 1
-
-
-        for key, value in exits.items():
-            if printalot: print(str(key) + ' exit: \t' + str(value))
-
-        
-        # merge total_daily_pnls per strategy 
-        number_of_trades = 0 
-        for filename in os.listdir(strategy_code_path):
-            if filename.endswith('.csv'):
-                number_of_trades += 1  
-                
-                daily_pnls = pd.read_csv(strategy_code_path + filename, parse_dates=['date'], index_col=['date'])
-
-                if (total_daily_pnls is None): 
-                    total_daily_pnls = daily_pnls
-                    
-                else: 
-                    total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0, join='outer', ignore_index=False).groupby(['date'], as_index=True).sum()
-                    total_daily_pnls.sort_index(inplace=True)
-
-
-        if (total_daily_pnls is None): 
-            print('no trades')
-            continue
-
-
-        total_daily_pnls['cum_sum'] = total_daily_pnls.pnl.cumsum() + total
-        total_daily_pnls['daily_ret'] = total_daily_pnls['cum_sum'].pct_change()
-        
-        annualized_sharpe_ratio = performance.annualized_sharpe_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        annualized_sortino_ratio = performance.annualized_sortino_ratio(np.mean(total_daily_pnls['daily_ret']), total_daily_pnls['daily_ret'], 0)
-        
-        
-        for key, value in total_daily_pnls.iterrows():
-            j += 1
-            total += value['pnl']
-            equity_curve[j] = {'strategy': strategy_code, 'date': key.date(), 'pnl': format(float(total), '.2f')}
-                            
-            if total >= running_global_peak: 
-                running_global_peak = total
-                min_since_global_peak = total
-                running_global_peak_date = key
-            if total < min_since_global_peak: 
-                min_since_global_peak = total
-                if total - running_global_peak <= max_dd:
-                    max_dd = total - running_global_peak
-                    running_max_dd_date = key
-                    max_dd_percentage = round((max_dd / running_global_peak * 100), 2)  
-                    max_dd_risk_percentage = round((max_dd / risk_capital * 100), 2)  
-                    max_dd_duration = abs((running_global_peak_date - running_max_dd_date).days)
-        
-        average_pnl = int(total_pnl / number_of_trades)
-        average_risk = int(total_risk / number_of_trades)
-        average_percentage = round(total_pnl / abs(total_risk) * 100, 2)
-        percentage_winners = int((winners / number_of_trades) * 100)
-
-        try: 
-            average_winner = int(allwinners / winners)
-        except ZeroDivisionError:
-            average_winner = 0
-            
-        try: 
-            average_looser = int(allloosers / (number_of_trades - winners))
-        except ZeroDivisionError:
-            average_looser = 0
-            
-        average_dit = int(total_dit / number_of_trades)
-        average_position_size = format(float(total_positions / number_of_trades), '.2f')
-        rod = format(float(average_percentage / (total_dit / number_of_trades)), '.2f')
-            
-        days = (end - start).days
-        years = round((days / 365), 2)
-        
-        annualized_pnl = int(total_pnl) / years 
-        annualized_RoR = round((annualized_pnl / risk_capital * 100), 2)
-        
-        rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
-
-        
-        results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': format(float(max_dd), '.2f'), 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date, 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
-
-
-    # save computed stats 
-    df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
-    df_curve.to_csv(strategy_path + '/results.csv')
-    
-    df_table = pd.DataFrame.from_dict(results_table, orient='index')
-    print (df_table)
-    df_table.to_html(strategy_path + '/results_table.html')
-
-
-    # Copy files for web 
-    shutil.copyfile(path + '/util/web/d3.js', strategy_path + '/d3.js') 
-    shutil.copyfile(path + '/util/web/index.html', strategy_path + '/index.html') 
-    try:
-        shutil.copyfile(path + '/util/web/' + str(strategy_name) + '.html', strategy_path + '/strategy.html') 
-    except Exception as e:
-        print (e)
