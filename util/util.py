@@ -455,12 +455,14 @@ def getTheta(combo, current_date):
                 
                 
 def getDeltaTheta(combo, current_date):
-            
-    delta_sum = getDelta(combo, current_date) 
-    theta_sum = getTheta(combo, current_date) 
 
-    deltatheta = abs(delta_sum) / abs(theta_sum)
-    return deltatheta
+    try: 
+        delta_sum = getDelta(combo, current_date) 
+        theta_sum = getTheta(combo, current_date) 
+        deltatheta = abs(delta_sum) / abs(theta_sum)
+        return deltatheta
+    except: 
+        return None
 
 
 def getDeltaThetaGroup(underlying, group, current_date, expiration):

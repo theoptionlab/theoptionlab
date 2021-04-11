@@ -66,14 +66,16 @@ class netzero(util.Strategy):
             short_upperexit = -40 + shortdifference  
 
             current_shortdelta = util.connector.select_delta(current_date, underlying, expiration, combo.shortposition.option.type, combo.shortposition.option.strike)
+           
             if (current_shortdelta is not None):
                 if (current_shortdelta > short_lowerexit) or (current_shortdelta < short_upperexit): 
                     return "sdc"
 
+
         # T/D Ratio
         if self.deltatheta_exit is not None: 
             current_deltatheta = util.getDeltaTheta(combo, current_date)
-            if current_deltatheta > self.deltatheta_exit:
+            if (current_deltatheta is not None) and (current_deltatheta > self.deltatheta_exit):
                 return "d/t"
 
         # time exit 
