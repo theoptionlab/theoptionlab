@@ -25,7 +25,6 @@ class MyDB(object):
         self.query(query)
         row = self._db_cur.fetchone()
         if row == None:
-            print (query)
             return None
         strike = row[0]
         return strike 
