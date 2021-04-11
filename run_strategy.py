@@ -27,7 +27,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
     
 
     while (current_date <= max_date):
-                        
+
         combo = None
         
         while ((xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) is False) 
@@ -40,11 +40,42 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
             current_date = current_date + timedelta(days=1)
             continue 
 
+        entry_vix = util.connector.query_midprice_underlying("^VIX", current_date) 
+        if ((strategy.min_vix_entry is not None) and (entry_vix < strategy.min_vix_entry)): 
+            print ("VIX below minimum VIX")
+            current_date = current_date + timedelta(days=1)
+            continue
+    
+        entry_underlying = util.connector.query_midprice_underlying(underlying, current_date) 
+        if (strategy.sma_window is not None):
+            sma_results = util.connector.query_sma(underlying, current_date, strategy.sma_window) 
+            sma_sum = 0
+            for sma_result in sma_results:
+                sma_sum += sma_result[0]
+            sma = sma_sum / len(sma_results)
+            if (entry_underlying > sma): 
+                print ("entry_underlying > sma")
+                current_date = current_date + timedelta(days=1)
+                continue
+        
         combo = strategy.makeCombo(underlying, current_date, expiration, 1)
         
         if combo is None: 
             current_date = current_date + timedelta(days=1)
             continue
+
+        iv_legs = ""
+        for position in combo.getPositions(): 
+            if iv_legs != "": iv_legs = iv_legs + "/"
+            if position is not None: 
+                iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
+                if ((strategy.min_iv_entry is not None) and (iv < strategy.min_iv_entry)): 
+                    print ("IV below minimum IV")
+                    current_date = current_date + timedelta(days=1)
+                    continue
+                
+                iv_legs = iv_legs + format(float(iv), '.2f')
+            else: iv_legs = iv_legs + "x"
         
         if strategy.checkCombo(underlying, combo): 
             break 
@@ -87,38 +118,8 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
         if position is not None: 
             strikes = strikes + str(int(position.option.strike))
         else: strikes = strikes + "x"
-        
-    iv_legs = ""
-    for position in combo.getPositions(): 
-        if iv_legs != "": iv_legs = iv_legs + "/"
-        if position is not None: 
-            iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
-            if ((strategy.min_iv_entry is not None) and (iv < strategy.min_iv_entry)): 
-                print ("IV below minimum IV")
-                return None 
-            
-            iv_legs = iv_legs + format(float(iv), '.2f')
-        else: iv_legs = iv_legs + "x"
     
-    
-    entry_vix = util.connector.query_midprice_underlying("^VIX", entry_date) 
-    if ((strategy.min_vix_entry is not None) and (entry_vix < strategy.min_vix_entry)): 
-        print ("VIX below minimum VIX")
-        return None 
-    
-    entry_underlying = util.connector.query_midprice_underlying(underlying, entry_date) 
-    
-    if (strategy.sma_window is not None):
-        sma_results = util.connector.query_sma(underlying, entry_date, strategy.sma_window) 
-        sma_sum = 0
-        for sma_result in sma_results:
-            sma_sum += sma_result[0]
-        sma = sma_sum / len(sma_results)
-        if (entry_underlying > sma): 
-            print ("entry_underlying > sma")
-            return None 
-        
-    
+
     # loop to check exit for each day 
     while flying:  
                                         
