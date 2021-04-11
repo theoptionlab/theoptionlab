@@ -10,12 +10,11 @@ def is_third_friday_or_saturday(d):
 
 
 # DTE-based entries. At the moment only monthlies
-# Tried root to get third friday / saturday, but that is not reliable 
-def getEntries(underlying, start, end, days):
-    
+def getEntries(underlying, start, end, days):    
     entries = {}
 
     expirations = util.connector.select_expirations(start + timedelta(days), end + timedelta(days), underlying)
+    
     for expiration in expirations: 
         expiration = expiration[0] 
         
