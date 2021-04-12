@@ -116,7 +116,7 @@ def derive_strategy_code(permutation, parameters):
     if ((len(parameters['pct_exit']) > 1) and permutation['pct_exit'] is not None): strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
     if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
     if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
-    if (len(parameters['deltatheta_exit']) > 1 and permutation['deltatheta_exit'] is not None): strategy_code += '_DT_' + str(int(permutation['deltatheta_exit'] * 100))
+    if (len(parameters['deltatheta_exit']) > 1 and permutation['deltatheta_exit'] is not None): strategy_code += '_DT' + str(int(permutation['deltatheta_exit'] * 100))
     code_tp = permutation['tp_exit']
     if (code_tp is not None) and code_tp < 1: 
         code_tp = int(code_tp * 100)
