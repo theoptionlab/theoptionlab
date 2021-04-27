@@ -125,26 +125,7 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
                         print (e)
                     
                 # run with parameters 
-                strategy.setParameters(permutation['patient_days_before'], 
-                permutation['patient_days_after'], 
-                permutation['cheap_entry'], 
-                permutation['down_day_entry'], 
-                permutation['patient_entry'], 
-                permutation['min_vix_entry'], 
-                permutation['max_vix_entry'], 
-                permutation['min_iv_entry'], 
-                permutation['max_iv_entry'], 
-                permutation['sma_window'], 
-                permutation['dte_entry'], 
-                permutation['els_entry'], 
-                permutation['ew_exit'], 
-                permutation['pct_exit'], 
-                permutation['dte_exit'], 
-                permutation['dit_exit'], 
-                permutation['deltatheta_exit'], 
-                permutation['tp_exit'], 
-                permutation['sl_exit'], 
-                permutation['delta'])
+                strategy.setParameters(permutation)
                 result = run_strategy.fly(strategy, underlying, risk_capital, quantity, entrydate, expiration)
 
                 if (not result is None): 
@@ -233,7 +214,10 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start,
     
     # prepare 
     if util.printalot: print('number of combinations: ' + str(len(list(dict_product(parameters)))))
+    for permutation in dict_product(parameters): 
+        print (util.derive_strategy_code(permutation, parameters))
     permutations = dict_product(parameters)
+    
         
     # create directories  
     path = os.getcwd()

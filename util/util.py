@@ -41,51 +41,32 @@ max_value = 100000
 printalot = True 
 
 
-class Strategy(object): 
-    
-    def __init__(self, patient_days_before = 0, patient_days_after = 0, cheap_entry = None, down_day_entry = None, patient_entry = None, min_vix_entry = None, max_vix_entry = None, dte_entry = None, els_entry = None, ew_exit = None, pct_exit = None, dte_exit = None, dit_exit = None, deltatheta_exit = None, tp_exit = None, sl_exit = None, delta = None):
-        
-        self.patient_days_before = patient_days_before 
-        self.patient_days_after = patient_days_after 
-        self.cheap_entry = cheap_entry 
-        self.down_day_entry = down_day_entry
-        self.patient_entry = patient_entry
-        self.min_vix_entry = min_vix_entry
-        self.max_vix_entry = max_vix_entry
-        self.dte_entry = dte_entry
-        self.els_entry = els_entry
-        self.ew_exit = ew_exit
-        self.pct_exit = pct_exit
-        self.dte_exit = dte_exit
-        self.dit_exit = dit_exit
-        self.deltatheta_exit = deltatheta_exit
-        self.tp_exit = tp_exit
-        self.sl_exit = sl_exit
-        self.delta = delta
+class Strategy(object):
 
-    def setParameters(self, patient_days_before, patient_days_after, cheap_entry, down_day_entry, patient_entry, min_vix_entry, max_vix_entry, min_iv_entry, max_iv_entry, sma_window, dte_entry, els_entry, ew_exit, pct_exit, dte_exit, dit_exit, deltatheta_exit, tp_exit, sl_exit, delta):
-        
-        self.patient_days_before = patient_days_before 
-        self.patient_days_after = patient_days_after 
-        self.cheap_entry = cheap_entry 
-        self.down_day_entry = down_day_entry
-        self.patient_entry = patient_entry
-        self.min_vix_entry = min_vix_entry
-        self.max_vix_entry = max_vix_entry
-        self.min_iv_entry = min_iv_entry
-        self.max_iv_entry = max_iv_entry
-        self.sma_window = sma_window
-        self.dte_entry = dte_entry
-        self.els_entry = els_entry
-        self.ew_exit = ew_exit
-        self.pct_exit = pct_exit
-        self.dte_exit = dte_exit
-        self.dit_exit = dit_exit
-        self.deltatheta_exit = deltatheta_exit
-        self.tp_exit = tp_exit
-        self.sl_exit = sl_exit
-        self.delta = delta
+    def setParameters(self, permutation):
+                
+        self.patient_days_before = permutation['patient_days_before'] 
+        self.patient_days_after =  permutation['patient_days_after']
+        self.cheap_entry = permutation['cheap_entry'] 
+        self.down_day_entry = permutation['down_day_entry']
+        self.patient_entry = permutation['patient_entry']
+        self.min_vix_entry = permutation['min_vix_entry']
+        self.max_vix_entry = permutation['max_vix_entry']
+        self.min_iv_entry = permutation['min_iv_entry']
+        self.max_iv_entry = permutation['max_iv_entry']
+        self.sma_window = permutation['sma_window']
+        self.dte_entry = permutation['dte_entry']
+        self.els_entry = permutation['els_entry']
+        self.ew_exit = permutation['ew_exit']
+        self.pct_exit = permutation['pct_exit']
+        self.dte_exit = permutation['dte_exit']
+        self.dit_exit = permutation['dit_exit']
+        self.deltatheta_exit = permutation['deltatheta_exit']
+        self.tp_exit = permutation['tp_exit']
+        self.sl_exit = permutation['sl_exit']
+        self.delta = permutation['delta']
 
+                
     def checkEntry(self, underlying, current_date):
         return True
     
@@ -106,16 +87,16 @@ def derive_strategy_code(permutation, parameters):
     if ((len(parameters['down_day_entry']) > 1) and permutation['down_day_entry']): strategy_code += 'D'
     if ((len(parameters['patient_entry']) > 1) and permutation['patient_entry']): strategy_code += 'P'
     if ((len(parameters['ew_exit']) > 1) and permutation['ew_exit']): strategy_code += 'E'
-    if permutation['min_vix_entry'] is not None: strategy_code += '_X_' + str(permutation['min_vix_entry'])
+    if (len(parameters['min_vix_entry']) > 1): strategy_code += '_X' + str(permutation['min_vix_entry'])
     if permutation['max_vix_entry'] is not None: strategy_code += '_X<_' + str(permutation['max_vix_entry'])
-    if permutation['min_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['min_iv_entry'] * 100))
+    if (len(parameters['min_iv_entry']) > 1): strategy_code += '_I' + ('None' if permutation['min_iv_entry'] is None else str(int(permutation['min_iv_entry'] * 100)))
     if permutation['max_iv_entry'] is not None: strategy_code += '_I' + str(int(permutation['max_iv_entry'] * 100))
     if permutation['sma_window'] is not None: strategy_code += '_A' + str(permutation['sma_window'])
     if (len(parameters['dte_entry']) > 1): strategy_code += '_E' + str(permutation['dte_entry'])
-    if permutation['els_entry'] is not None: strategy_code += '_EE_' + str(permutation['els_entry'])
+    if permutation['els_entry'] is not None: strategy_code += '_EE' + str(permutation['els_entry'])
     if ((len(parameters['pct_exit']) > 1) and permutation['pct_exit'] is not None): strategy_code += '_C' + str(int(permutation['pct_exit'] * 100))
     if ((len(parameters['dte_exit']) > 1) and permutation['dte_exit'] != 0): strategy_code += '_X' + str(permutation['dte_exit'])
-    if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT_' + str(permutation['dit_exit'])
+    if ((len(parameters['dit_exit']) > 1) and permutation['dit_exit'] != 0): strategy_code += '_EXDIT' + str(permutation['dit_exit'])
     if (len(parameters['deltatheta_exit']) > 1 and permutation['deltatheta_exit'] is not None): strategy_code += '_DT' + str(int(permutation['deltatheta_exit'] * 100))
     code_tp = permutation['tp_exit']
     if (code_tp is not None) and code_tp < 1: 
@@ -128,7 +109,9 @@ def derive_strategy_code(permutation, parameters):
         strategy_code = 'X'
     if strategy_code.startswith('_'): 
         strategy_code = strategy_code[1:]
+    strategy_code = strategy_code.replace('_None', 'X')
     strategy_code = strategy_code.replace('None', 'X')
+    strategy_code = strategy_code.replace('.', 'x')
     return (strategy_code)
 
 

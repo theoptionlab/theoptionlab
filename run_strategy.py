@@ -9,9 +9,17 @@ from util import util
 
 xnys = tc.get_calendar("XNYS")
 
-
+def checkMinIV(combo, miniv):
+    for position in combo.getPositions(): 
+        if position is not None: 
+            iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
+            if (iv < miniv): 
+                print ("IV below minimum IV")
+                return False 
+    return True 
+            
 def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration): 
-
+    
     flying = True 
     daily_pnls_dict = {}
     previouspnl = 0
@@ -27,7 +35,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
     
 
     while (current_date <= max_date):
-
+        
         combo = None
         
         while ((xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) is False) 
@@ -42,7 +50,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
 
         entry_vix = util.connector.query_midprice_underlying("^VIX", current_date) 
         if ((strategy.min_vix_entry is not None) and (entry_vix < strategy.min_vix_entry)): 
-            print ("VIX below minimum VIX")
+            print ("VIX below minimum VIX " + str(strategy.min_vix_entry))
             current_date = current_date + timedelta(days=1)
             continue
     
@@ -64,18 +72,10 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
             current_date = current_date + timedelta(days=1)
             continue
 
-        iv_legs = ""
-        for position in combo.getPositions(): 
-            if iv_legs != "": iv_legs = iv_legs + "/"
-            if position is not None: 
-                iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
-                if ((strategy.min_iv_entry is not None) and (iv < strategy.min_iv_entry)): 
-                    print ("IV below minimum IV")
-                    current_date = current_date + timedelta(days=1)
-                    continue
-                
-                iv_legs = iv_legs + format(float(iv), '.2f')
-            else: iv_legs = iv_legs + "x"
+        if ((strategy.min_iv_entry is not None) and not(checkMinIV(combo, strategy.min_iv_entry))): 
+            combo = None 
+            current_date = current_date + timedelta(days=1)
+            continue
         
         if strategy.checkCombo(underlying, combo): 
             break 
@@ -119,7 +119,14 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
             strikes = strikes + str(int(position.option.strike))
         else: strikes = strikes + "x"
     
-
+    iv_legs = ""
+    for position in combo.getPositions(): 
+        if iv_legs != "": iv_legs = iv_legs + "/"
+        if position is not None: 
+            iv = util.connector.select_iv(position.option.entry_date, position.option.underlying, position.option.expiration, position.option.type, position.option.strike)
+            iv_legs = iv_legs + format(float(iv), '.2f')
+        else: iv_legs = iv_legs + "x"
+            
     # loop to check exit for each day 
     while flying:  
                                         
