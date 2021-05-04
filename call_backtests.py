@@ -10,20 +10,32 @@ start_time = time.time()
 start = datetime(2006, 11, 1).date()
 end = datetime(2021, 4, 1).date()
 
-frequency_string = None 
-quantity = None 
+frequency_string = 'm'
+quantity = None
 risk_capital = 100000
 include_underlying = True 
 underlying = "^RUT"
 
-backtest_strategies.backtest(bf70.bf70(), underlying, "bf70", risk_capital, quantity, start, end, bf70.parameters, frequency_string, include_underlying)
-compute_stats.compute_stats("bf70", underlying, risk_capital)
+strategy_name = 'bf70_' + underlying.replace('^','').lower() + '_' + frequency_string
+if quantity is not None: 
+    strategy_name += "_q" + str(quantity)
 
-backtest_strategies.backtest(the_bull.bull(), underlying, "the_bull", risk_capital, quantity, start, end, the_bull.parameters, frequency_string, include_underlying)
-compute_stats.compute_stats("the_bull", underlying, risk_capital)
-#
-backtest_strategies.backtest(netzero.netzero(), underlying, "netzero", risk_capital, quantity, start, end, netzero.parameters, frequency_string, include_underlying)
-compute_stats.compute_stats("netzero", underlying, risk_capital)
+backtest_strategies.backtest(bf70.bf70(), underlying, strategy_name, risk_capital, quantity, start, end, bf70.parameters, frequency_string, include_underlying)
+compute_stats.compute_stats(strategy_name, underlying, risk_capital)
+
+strategy_name = 'the_bull_' + underlying.replace('^','').lower() + '_' + frequency_string
+if quantity is not None: 
+    strategy_name += "_q" + str(quantity)
+
+backtest_strategies.backtest(the_bull.bull(), underlying, strategy_name, risk_capital, quantity, start, end, the_bull.parameters, frequency_string, include_underlying)
+compute_stats.compute_stats(strategy_name, underlying, risk_capital)
+
+strategy_name = 'netzero_' + underlying.replace('^','').lower() + '_' + frequency_string
+if quantity is not None: 
+    strategy_name += "_q" + str(quantity)
+    
+backtest_strategies.backtest(netzero.netzero(), underlying, strategy_name, risk_capital, quantity, start, end, netzero.parameters, frequency_string, include_underlying)
+compute_stats.compute_stats(strategy_name, underlying, risk_capital)
 
 print()
 print("--- %s seconds ---" % (time.time() - start_time))
