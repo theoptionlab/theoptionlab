@@ -32,7 +32,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
     j  = 0 
     
     path = os.getcwd()
-    strategy_path = path + '/results/' + strategy_name 
+    strategy_path = path + '/results/' + strategy_name
     df = pd.read_csv(strategy_path + '/single_results.csv') 
     single_results = df.to_dict(orient='index')
     
