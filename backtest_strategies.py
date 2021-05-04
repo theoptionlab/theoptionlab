@@ -38,7 +38,7 @@ def make_dir(path):
 def get_next_entry (index_nr, frequency_string, single_entries, entry_date, end_date, underlying, dte): 
     
 
-    if frequency_string == 'C': 
+    if frequency_string == 'c': 
         entries = {}
 
         while (entry_date <= end_date):
@@ -83,17 +83,20 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
         strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
         make_dir(strategy_code_path)
 
-        single_entries = {}
+        single_entries = None
         # get entries, measure time 
         starttime = time.time()
-        if frequency_string == 'C': 
+        if frequency_string == 'c':
             single_entries = {} 
-        if frequency_string == 'B': 
+        if frequency_string == 'b':
             single_entries = entries.getDailyEntries(underlying, start, end, permutation['dte_entry'])
-        if frequency_string == 'SMS': 
+        if frequency_string == 'sms':
             single_entries = entries.getSMSEntries(underlying, start, end, permutation['dte_entry'])
-        if frequency_string is None: 
+        if frequency_string == 'm':
             single_entries = entries.getEntries(underlying, start, end, permutation['dte_entry'])
+        if single_entries is None: 
+            print ("frequency string not known: " + frequency_string)
+            return False 
 
         print('time needed to get entries: ' + format(float(time.time() - starttime), '.2f'))
         
@@ -115,7 +118,7 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
                 if entrydate >= (datetime.now().date() - timedelta(days=7)):
                     break 
                 
-                if strategy_name == 'the_bull': 
+                if strategy_name.startswith('the_bull'): 
                     permutation['dte_exit'] = 37
                     try: 
                         next_entry = get_next_entry(index_nr + 1, frequency_string, single_entries, next_date, end, underlying, permutation['dte_entry']) 
@@ -126,6 +129,8 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
                     
                 # run with parameters 
                 strategy.setParameters(permutation)
+                if ((strategy_name.startswith('bf70') and (frequency_string == 'c'))): 
+                    strategy.patient_days_before = 0 
                 result = run_strategy.fly(strategy, underlying, risk_capital, quantity, entrydate, expiration)
 
                 if (not result is None): 
@@ -203,7 +208,7 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
     df_log.to_csv(strategy_path + '/single_results.csv')
         
         
-def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start, end, parameters, frequency_string=None, include_underlying=False): 
+def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start, end, parameters, frequency_string="m", include_underlying=False): 
 
     if util.printalot: print ('strategy_name: ' + str(strategy_name))
     if util.printalot: print ('risk_capital: ' + str(risk_capital))
@@ -222,8 +227,7 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start,
     # create directories  
     path = os.getcwd()
     make_dir(path + '/results')
-    strategy_path = path + '/results/' + strategy_name 
-    if frequency_string == "B": strategy_path += '_daily'
+    strategy_path = path + '/results/' + strategy_name
     make_dir(strategy_path)
     try: 
         shutil.rmtree(strategy_path + '/daily_pnls')
