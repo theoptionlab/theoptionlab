@@ -14,11 +14,12 @@
 	<br />
 	<br />
 
-	<b>Entry</b>
-	<br />
+	<b>Entry</b><br />
+	A new trade is entered every month, on the date closest to the specified 70 DTE.<br />
+
 
 	<ul>
-		<li>70 (65 - 75) dte</li>
+		<li>70 (65 - 75) DTE</li>
 		<li>1 (upper) long put at the money</li>
 		<li>2 short puts 30 points below the upper long strike</li>
 		<li>1 (lower) long put 40 points below short strike</li>
@@ -27,11 +28,11 @@
 	<b>Exit</b>
 	<br />
 	<ol>
-		<li>TP: $1000 &gt; 35 dte; $800 &gt; 28 dte; $600 &gt; 21 dte;
+		<li>TP: $1000 &gt; 35 DTE; $800 &gt; 28 DTE; $600 &gt; 21 DTE;
 			$400</li>
 		<li>^RUT is 10 points below short strike</li>
-		<li>dte &lt; 40 and ^RUT is 60 points above short strike</li>
-		<li>dte &lt; 7</li>
+		<li>DTE &lt; 40 and ^RUT is 60 points above short strike</li>
+		<li>DTE &lt; 7</li>
 		<li>expected value &lt; current pnl</li>
 	</ol>
 
@@ -41,5 +42,5 @@
 	<p>
 		<b>C</b> = "Cheap": Entry for $1.10 or less <b>D</b> = "Downday":
 		Entry on a down day (&lt; 0%) <b>P</b> = "Patient": Entry above 75 -
-		65 dte <b>E</b> = according to expected value
+		65 DTE <b>E</b> = according to expected value
 	</p>
