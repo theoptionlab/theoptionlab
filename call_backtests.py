@@ -8,7 +8,7 @@ import compute_stats
 
 start_time = time.time()
 start = datetime(2006, 11, 1).date()
-end = datetime(2021, 4, 1).date()
+end = datetime(2021, 10, 1).date()
 
 frequency_string = 'm'
 quantity = None
@@ -33,7 +33,7 @@ compute_stats.compute_stats(strategy_name, underlying, risk_capital)
 strategy_name = 'netzero_' + underlying.replace('^','').lower() + '_' + frequency_string
 if quantity is not None: 
     strategy_name += "_q" + str(quantity)
-    
+
 backtest_strategies.backtest(netzero.netzero(), underlying, strategy_name, risk_capital, quantity, start, end, netzero.parameters, frequency_string, include_underlying)
 compute_stats.compute_stats(strategy_name, underlying, risk_capital)
 
