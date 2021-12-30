@@ -11,7 +11,7 @@
 `psql -tc "SELECT 1 FROM pg_database WHERE datname = 'optiondata'" | grep -q 1 || psql -c "CREATE DATABASE optiondata"`
 
 - Create database and tables with script:
-`psql -d optiondata -f optiondata/create_db.sql`
+`psql -d optiondata -f optiondata/db/create_db.sql`
 
 - Adapt `private/settings_template.py` with your own settings and rename the file into settings.py
 
