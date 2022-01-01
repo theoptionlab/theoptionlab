@@ -14,16 +14,16 @@ xnys = tc.get_calendar("XNYS")
 from py_vollib import black_scholes
 from scipy.interpolate import InterpolatedUnivariateSpline as interpol
 import zipfile 
+dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
+
 
 
 years = ([0.0, 1 / 360, 1 / 52, 1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12])
 functions_dict = {}
 
-df_yields = pd.read_csv(settings.path_to_libor_csv)
-cols = ['date', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12']
-df_yields.columns = cols
-df_yields['date'] = pd.to_datetime(df_yields['date'])
-df_yields.set_index('date', inplace=True)
+df_yields = pd.read_csv(settings.path_to_libor_csv, index_col='Date', parse_dates=['Date'], date_parser=dateparse)
+df_yields = df_yields.drop(['Week day'], axis=1)
+
 
 entries = []
 
@@ -729,9 +729,9 @@ def get_riskfree_libor(date, yte):
         try: 
             df = df_yields.query('index==@date')
             dr = df.iloc[0]
-            rates = ([0.0, dr['ON'] / 100, dr['w1'] / 100, dr['m1'] / 100, dr['m2'] / 100, dr['m3'] / 100, dr['m6'] / 100, dr['m12'] / 100])
+            rates = ([0.0, dr['ON'] / 100, dr['1W'] / 100, dr['1M'] / 100, dr['2M'] / 100, dr['3M'] / 100, dr['6M'] / 100, dr['12M'] / 100])
             
-            df_inter = pd.DataFrame(columns=['0', 'ON', 'w1', 'm1', 'm2', 'm3', 'm6', 'm12'])
+            df_inter = pd.DataFrame(columns=['0', 'ON', '1W', '1M', '2M', '3M', '6M', '12M'])
             df_inter.loc[0] = years
             df_inter.loc[1] = rates
             df_inter = df_inter.dropna(axis='columns')
