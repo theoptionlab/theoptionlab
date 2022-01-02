@@ -144,7 +144,9 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
             max_dd_duration = abs(
                 (running_global_peak_date - running_max_dd_date).days)
 
-      average_pnl = int(total_pnl / number_of_trades)
+      average_pnl_trade_dollar = int(total_pnl / number_of_trades)
+      average_pnl_day_dollar = int(total_pnl / total_dit)
+
       average_risk = int(total_risk / number_of_trades)
       average_percentage = round(total_pnl / abs(total_risk) * 100, 2)
       percentage_winners = int((winners / number_of_trades) * 100)
@@ -174,30 +176,54 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
       annualized_RoR = round((annualized_pnl / risk_capital * 100), 2)
       rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
 
+      annualized_RoR = format(annualized_RoR, '.2f')
+      rrr = format(rrr, '.2f')
+
+      total_pnl_percentage = round((total_pnl / risk_capital * 100), 2)
+
+      average_pnl_percentage_trade = round(
+          total_pnl_percentage / number_of_trades, 2)
+      average_pnl_percentage_trade = (
+          '{:,.2f}'.format(average_pnl_percentage_trade))
+
+      average_pnl_percentage_day = round(
+          total_pnl_percentage / total_dit, 2)
+      average_pnl_percentage_day = (
+          '{:,.2f}'.format(average_pnl_percentage_day))
+
+      total_pnl_percentage = ('{:,.2f}'.format(total_pnl_percentage))
+
       annualized_sharpe_ratio = format(annualized_sharpe_ratio, '.2f')
       annualized_sortino_ratio = format(annualized_sortino_ratio, '.2f')
 
       max_dd_percentage = format(max_dd_percentage, '.2f')
       average_percentage = format(average_percentage, '.2f')
 
-      annualized_RoR = format(annualized_RoR, '.2f')
-      rrr = format(rrr, '.2f')
-
       results_table[strategy_code] = {
 
-          # Days in Trade (DIT)
-          'Days in Trade (DIT)': '',
-          'avg DIT': average_dit,
-          'total DITs': total_dit,
-
           # Trade details
-          'Details': '',
-          'total pnl': '$' + str(int(total_pnl)),
-          'avg pnl': '$' + str(average_pnl),
-          'avg risk': '$' + str(average_risk),
+          'Trade details': '',
+          'avg size': average_position_size,
+          'avg risk': '$' + str('{:,.0f}'.format(average_risk)),
+          'avg DIT': average_dit,
+          'total DITs': '{:,}'.format(total_dit),
+
+          # P&L $
+          'P&L $': '',
+          'avg p&l/trade $': '$' + str('{:,.0f}'.format(average_pnl_trade_dollar)),
+          'avg p&l/day $': '$' + str('{:,.0f}'.format(average_pnl_day_dollar)),
+          'total pnl $': '$' + str('{:,.0f}'.format(total_pnl)),
+
+          # P&L %
+          'P&L %': '',
+          'avg p&l/trade %': str(average_pnl_percentage_trade) + '%',
+          'avg p&l/day %': str(average_pnl_percentage_day) + '%',
+          'total pnl %': str(total_pnl_percentage) + '%',
+
+          # RoR and RRR
+          'RoR and RRR': '',
           'avg RoR': str(average_percentage) + '%',
           'ann RoR': str(annualized_RoR) + '%',
-          'avg size': average_position_size,
           'avg RoR/DIT': rod,
           'RRR': rrr,
 
@@ -206,12 +232,12 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
           'total trades': number_of_trades,
           '# winners': winners,
           'winners': str(percentage_winners) + '%',
-          'avg winner': '$' + str(average_winner),
-          'max winner': '$' + str(int(maxwinner)),
+          'avg winner': '$' + str('{:,.0f}'.format(average_winner)),
+          'max winner': '$' + str('{:,.0f}'.format(maxwinner)),
           '# losers': losers,
           'losers %': str(percentage_losers) + '%',
-          'avg loser': '$' + str(average_loser),
-          'max loser': '$' + str(int(maxloser)),
+          'avg loser': '$' + str('{:,.0f}'.format(average_loser)),
+          'max loser': '$' + str('{:,.0f}'.format(maxloser)),
 
           # Drawdown
           'Drawdown': '',
