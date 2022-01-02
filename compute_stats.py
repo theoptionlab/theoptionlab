@@ -13,7 +13,7 @@ from util import util
 from util import performance
 
 import trading_calendars as tc
-xnys = tc.get_calendar("XNYS")
+xnys = tc.get_calendar('XNYS')
 
 
 def list_strategies(path, underlying):
@@ -21,7 +21,7 @@ def list_strategies(path, underlying):
   for dir in os.listdir(path):
     if os.path.isdir(os.path.join(path, dir)):
       list.append(dir)
-  list.append(list.pop(list.index(underlying.replace("^", ""))))
+  list.append(list.pop(list.index(underlying.replace('^', ''))))
   return list
 
 
@@ -43,7 +43,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
 
     if (strategy_code not in exclude):
 
-      strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
+      strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + '/'
 
       exits = {}
       total_positions = 0
@@ -51,10 +51,10 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
       total_pnl = 0
       winners = 0
       allwinners = 0
-      allloosers = 0
+      alllosers = 0
       maxwinner = 0
-      loosers = 0
-      maxlooser = 0
+      losers = 0
+      maxloser = 0
       total_dit = 0
 
       total_daily_pnls = None
@@ -79,10 +79,10 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
               maxwinner = value['pnl']
 
           else:
-            allloosers += value['pnl']
-            loosers += 1
-            if value['pnl'] < maxlooser:
-              maxlooser = value['pnl']
+            alllosers += value['pnl']
+            losers += 1
+            if value['pnl'] < maxloser:
+              maxloser = value['pnl']
 
           total_dit += value['dit']
 
@@ -148,6 +148,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
       average_risk = int(total_risk / number_of_trades)
       average_percentage = round(total_pnl / abs(total_risk) * 100, 2)
       percentage_winners = int((winners / number_of_trades) * 100)
+      percentage_losers = int((losers / number_of_trades) * 100)
 
       try:
         average_winner = int(allwinners / winners)
@@ -155,9 +156,9 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
         average_winner = 0
 
       try:
-        average_looser = int(allloosers / (number_of_trades - winners))
+        average_loser = int(alllosers / (number_of_trades - winners))
       except ZeroDivisionError:
-        average_looser = 0
+        average_loser = 0
 
       average_dit = int(total_dit / number_of_trades)
       average_position_size = format(
@@ -165,16 +166,65 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
       rod = format(float(average_percentage /
                    (total_dit / number_of_trades)), '.2f')
 
-      days = (equity_curve[j]["date"] - equity_curve[1]["date"]).days
+      days = (equity_curve[j]['date'] - equity_curve[1]['date']).days
       years = round((days / 365), 2)
 
       annualized_pnl = int(total_pnl) / years
-      annualized_RoR = round((annualized_pnl / risk_capital * 100), 2)
 
+      annualized_RoR = round((annualized_pnl / risk_capital * 100), 2)
       rrr = round((annualized_RoR / -max_dd_risk_percentage), 2)
 
-      results_table[strategy_code] = {'trades': number_of_trades, 'Sharpe': annualized_sharpe_ratio, 'Sortino': annualized_sortino_ratio, 'total pnl': int(total_pnl), 'avg pnl': average_pnl, 'avg risk': average_risk, 'avg RoR %': average_percentage, 'annualized RoR%': annualized_RoR, 'max dd $': format(float(
-          max_dd), '.2f'), 'max dd on risk %': max_dd_risk_percentage, 'max dd on previous peak %': max_dd_percentage, 'max dd date': running_max_dd_date, 'max dd duration': max_dd_duration, 'pct winners': percentage_winners, 'avg winner': average_winner, 'max winner': int(maxwinner), 'avg looser': average_looser, 'max looser': int(maxlooser), 'avg DIT': average_dit, 'avg size': average_position_size, 'avg RoR / avg DIT': rod, 'RRR': rrr}
+      annualized_sharpe_ratio = format(annualized_sharpe_ratio, '.2f')
+      annualized_sortino_ratio = format(annualized_sortino_ratio, '.2f')
+
+      max_dd_percentage = format(max_dd_percentage, '.2f')
+      average_percentage = format(average_percentage, '.2f')
+
+      annualized_RoR = format(annualized_RoR, '.2f')
+      rrr = format(rrr, '.2f')
+
+      results_table[strategy_code] = {
+
+          # Days in Trade (DIT)
+          'Days in Trade (DIT)': '',
+          'avg DIT': average_dit,
+          'total DITs': total_dit,
+
+          # Trade details
+          'Details': '',
+          'total pnl': '$' + str(int(total_pnl)),
+          'avg pnl': '$' + str(average_pnl),
+          'avg risk': '$' + str(average_risk),
+          'avg RoR': str(average_percentage) + '%',
+          'ann RoR': str(annualized_RoR) + '%',
+          'avg size': average_position_size,
+          'avg RoR/DIT': rod,
+          'RRR': rrr,
+
+          # Trades
+          'Trades': '',
+          'total trades': number_of_trades,
+          '# winners': winners,
+          'winners': str(percentage_winners) + '%',
+          'avg winner': '$' + str(average_winner),
+          'max winner': '$' + str(int(maxwinner)),
+          '# losers': losers,
+          'losers %': str(percentage_losers) + '%',
+          'avg loser': '$' + str(average_loser),
+          'max loser': '$' + str(int(maxloser)),
+
+          # Drawdown
+          'Drawdown': '',
+          'max dd': '$' + str(format(int(max_dd))),
+          'max dd on risk': str(max_dd_risk_percentage) + '%',
+          'max dd on prev peak': str(max_dd_percentage) + '%',
+          'max dd date': running_max_dd_date.date(),
+          'max dd days': max_dd_duration,
+
+          # Performance
+          'Performance': '',
+          'Sharpe': annualized_sharpe_ratio,
+          'Sortino': annualized_sortino_ratio, }
 
   # save computed stats
   df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
