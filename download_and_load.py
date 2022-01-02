@@ -5,8 +5,7 @@ from private import settings
 
 download_data.download(settings.data_dir)
 
-# symbols = ["^RUT", "^SPX", "^VIX"]
-symbols = ["^RUT"]
+symbols = ["^RUT", "^VIX"]
 precompute = True
 
 # load all data from the directory specified in the path.

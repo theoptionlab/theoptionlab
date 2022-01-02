@@ -52,111 +52,115 @@ def load(underlyings, dir, precompute_all):
 
   for underlying in underlyings:
 
-    query = (
-        "SELECT DISTINCT quote_date FROM optiondata WHERE underlying_symbol = '"
-        + underlying
-        + "' AND quote_date IN "
-        + str(dates_from_dir).replace("{", "(").replace("}", ")")
-        + ""
-    )
+    if len(dates_from_dir) > 0:
 
-    cur2.execute(query)
-    rows = cur2.fetchall()
-    for row in rows:
-      dates_in_db.add(str(row[0]))
+      query = (
+          "SELECT DISTINCT quote_date FROM optiondata WHERE underlying_symbol = '"
+          + underlying
+          + "' AND quote_date IN "
+          + str(dates_from_dir).replace("{", "(").replace("}", ")")
+          + ""
+      )
 
-    dates_to_load = dates_from_dir - dates_in_db
-    print("dates_from_dir: " + str(len(dates_from_dir)))
-    print("dates_in_db: " + str(len(dates_in_db)))
-    print("dates_to_load: " + str(len(dates_to_load)))
-    print()
-    exit
+      cur2.execute(query)
+      rows = cur2.fetchall()
+      for row in rows:
+        dates_in_db.add(str(row[0]))
 
-    for date in sorted(dates_to_load):
+      dates_to_load = dates_from_dir - dates_in_db
+      print("dates_from_dir: " + str(len(dates_from_dir)))
+      print("dates_in_db: " + str(len(dates_in_db)))
+      print("dates_to_load: " + str(len(dates_to_load)))
+      print()
 
-      if ((underlying in util.startdates) and (datetime.strptime(date, '%Y-%m-%d').date() > util.startdates[underlying])) or (underlying not in util.startdates):
+      for date in sorted(dates_to_load):
 
-        unzippedpath = ""
-        counter += 1
-        file = "UnderlyingOptionsEODQuotes_" + str(date) + ".zip"
-        print(str(counter) + "\t" + date + "\t" + underlying + "\t" + file)
-        currentdir = dir
-        if currentdir.endswith("/optiondata/"):
-          currentdir = currentdir + date[0:4] + "/"
+        if ((underlying in util.startdates) and (datetime.strptime(date, '%Y-%m-%d').date() > util.startdates[underlying])) or (underlying not in util.startdates):
 
-        datafilepath = currentdir + file
-        unzippedpath = util.unzip(datafilepath)
+          unzippedpath = ""
+          counter += 1
+          file = "UnderlyingOptionsEODQuotes_" + str(date) + ".zip"
+          print(str(counter) + "\t" + date +
+                "\t" + underlying + "\t" + file)
+          currentdir = dir
+          if currentdir.endswith("/optiondata/"):
+            currentdir = currentdir + date[0:4] + "/"
 
-        if unzippedpath is not None:
+          datafilepath = currentdir + file
+          unzippedpath = util.unzip(datafilepath)
 
-          df = pd.read_csv(
-              unzippedpath,
-              header=0,
-              dtype={
-                  "underlying_symbol": object,
-                  "quote_date": object,
-                  "root": object,
-                  "expiration": object,
-                  "strike": np.float64,
-                  "option_type": object,
-                  "open": np.float64,
-                  "high": np.float64,
-                  "low": np.float64,
-                  "close": np.float64,
-                  "trade_volume": np.int64,
-                  "bid_size_1545": np.int64,
-                  "bid_1545": np.float64,
-                  "ask_size_1545": np.int64,
-                  "ask_1545": np.float64,
-                  "underlying_bid_1545": np.float64,
-                  "underlying_ask_1545": np.float64,
-                  "bid_size_eod": np.int64,
-                  "bid_eod": np.float64,
-                  "ask_size_eod": np.int64,
-                  "ask_eod": np.float64,
-                  "underlying_bid_eod": np.float64,
-                  "underlying_ask_eod": np.float64,
-                  "vwap": object,
-                  "open_interest": np.float64,
-                  "delivery_code": object,
-              },
-          )
+          if unzippedpath is not None:
 
-          filtered = df[(df["underlying_symbol"] == underlying)]
-
-          if underlying == "^SPX":
-            filtered = filtered[
-                (filtered.root != "BSZ") & (filtered.root != "BSK")
-            ]  # filter out binary options
-
-          filtered["option_type"] = filtered.option_type.str.lower()
-          filtered["mid_1545"] = (
-              filtered["bid_1545"] + filtered["ask_1545"]) / 2
-          filtered["underlying_mid_1545"] = (
-              filtered["underlying_bid_1545"] +
-              filtered["underlying_ask_1545"]
-          ) / 2
-
-          if len(filtered.index) > 0:
-            print(str(len(filtered.index)))
-            filtered.to_sql(
-                table,
-                engine,
-                if_exists="append",
-                index=False,
-                chunksize=1000,
+            df = pd.read_csv(
+                unzippedpath,
+                header=0,
+                dtype={
+                    "underlying_symbol": object,
+                    "quote_date": object,
+                    "root": object,
+                    "expiration": object,
+                    "strike": np.float64,
+                    "option_type": object,
+                    "open": np.float64,
+                    "high": np.float64,
+                    "low": np.float64,
+                    "close": np.float64,
+                    "trade_volume": np.int64,
+                    "bid_size_1545": np.int64,
+                    "bid_1545": np.float64,
+                    "ask_size_1545": np.int64,
+                    "ask_1545": np.float64,
+                    "underlying_bid_1545": np.float64,
+                    "underlying_ask_1545": np.float64,
+                    "bid_size_eod": np.int64,
+                    "bid_eod": np.float64,
+                    "ask_size_eod": np.int64,
+                    "ask_eod": np.float64,
+                    "underlying_bid_eod": np.float64,
+                    "underlying_ask_eod": np.float64,
+                    "vwap": object,
+                    "open_interest": np.float64,
+                    "delivery_code": object,
+                },
             )
-            db.commit()
 
-        if (unzippedpath != "") and (unzippedpath is not None):
-          os.remove(unzippedpath)
+            filtered = df[(df["underlying_symbol"] == underlying)]
 
-    if precompute_all:
-      precompute_counter = 0
-      for date_in_db in sorted(dates_in_db):
-        counter += 1
-        print(str(counter) + ": " + date_in_db)
-        precompute_greeks.precompute("optiondata", date_in_db, underlying, True)
+            if underlying == "^SPX":
+              filtered = filtered[
+                  (filtered.root != "BSZ") & (
+                      filtered.root != "BSK")
+              ]  # filter out binary options
+
+            filtered["option_type"] = filtered.option_type.str.lower()
+            filtered["mid_1545"] = (
+                filtered["bid_1545"] + filtered["ask_1545"]) / 2
+            filtered["underlying_mid_1545"] = (
+                filtered["underlying_bid_1545"] +
+                filtered["underlying_ask_1545"]
+            ) / 2
+
+            if len(filtered.index) > 0:
+              print(str(len(filtered.index)))
+              filtered.to_sql(
+                  table,
+                  engine,
+                  if_exists="append",
+                  index=False,
+                  chunksize=1000,
+              )
+              db.commit()
+
+          if (unzippedpath != "") and (unzippedpath is not None):
+            os.remove(unzippedpath)
+
+      if precompute_all:
+        precompute_counter = 0
+        for date_to_load in sorted(dates_to_load):
+          counter += 1
+          print(str(counter) + ": " + date_to_load)
+          precompute_greeks.precompute(
+              "optiondata", date_to_load, underlying, True)
 
   print("Done loading data \n")
 

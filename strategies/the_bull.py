@@ -28,39 +28,43 @@ parameters["sl_exit"] = [200, 400, None]
 parameters["delta"] = [None]
 
 
-class bull(util.Strategy): 
+class bull(util.Strategy):
 
-    def makeCombo(self, underlying, current_date, expiration, position_size):
-    
-        closest_strike = util.connector.select_strike_by_delta(current_date, underlying, expiration, "p", -10, 25)
-        if closest_strike is None: return None 
-        entry_price = 0 
-        
-        while (entry_price > -2.5): 
-            closest_strike += 25
-            pcs = util.testPCS(closest_strike, current_date, underlying, expiration, position_size, 30)
-            if pcs is None: continue 
-            else: entry_price = util.getEntryPrice(pcs) 
-    
-        return pcs 
-    
-    def checkExit(self, underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
-    
+  def makeCombo(self, underlying, current_date, expiration, position_size):
 
-        if dte < self.dte_exit: 
-            return "dte"
-        
-        # Stop Loss: x% of the credit received 
-        if (self.sl_exit is not None):
-            sl = (entry_price * self.sl_exit)
-            if current_pnl <= sl:
-                return "sl"
-        
-        # Take Profit
-        # ratio sits in the tp_exit => could be nicer ss
-        if (self.tp_exit is not None): 
-            tp = (-entry_price * self.tp_exit)
-            if current_pnl >= tp:
-                return "tp"
-        
-        return None 
+    closest_strike = util.connector.select_strike_by_delta(
+        current_date, underlying, expiration, "p", -10, 25)
+    if closest_strike is None:
+      return None
+    entry_price = 0
+
+    while (entry_price > -2.5):
+      closest_strike += 25
+      pcs = util.testPCS(closest_strike, current_date,
+                         underlying, expiration, position_size, 30)
+      if pcs is None:
+        continue
+      else:
+        entry_price = util.getEntryPrice(pcs)
+
+    return pcs
+
+  def checkExit(self, underlying, combo, dte, current_pnl, max_risk, entry_price, current_date, expiration, dit, position_size):
+
+    if dte < self.dte_exit:
+      return "dte"
+
+    # Stop Loss: x% of the credit received
+    if (self.sl_exit is not None):
+      sl = (entry_price * self.sl_exit)
+      if current_pnl <= sl:
+        return "sl"
+
+    # Take Profit
+    # ratio sits in the tp_exit => could be nicer ss
+    if (self.tp_exit is not None):
+      tp = (-entry_price * self.tp_exit)
+      if current_pnl >= tp:
+        return "tp"
+
+    return None
