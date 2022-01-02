@@ -180,7 +180,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
   df_curve = pd.DataFrame.from_dict(equity_curve, orient='index')
   df_curve.to_csv(strategy_path + '/results.csv')
 
-  df_table = pd.DataFrame.from_dict(results_table, orient='index')
+  df_table = pd.DataFrame.from_dict(results_table)
   print(df_table)
   df_table.to_html(strategy_path + '/results_table.html')
 
