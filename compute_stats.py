@@ -16,34 +16,23 @@ import trading_calendars as tc
 xnys = tc.get_calendar('XNYS')
 
 
-def list_strategies(path, underlying):
-  list = []
-  for dir in os.listdir(path):
-    if os.path.isdir(os.path.join(path, dir)):
-      list.append(dir)
-  list.append(list.pop(list.index(underlying.replace('^', ''))))
-  return list
+def compute_stats(start_date, strategy_name, underlying, risk_capital, exclude=[]):
 
-
-def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
-
-  # start with computing stats
+  # start computing stats
   equity_curve = collections.OrderedDict()
   results_table = collections.OrderedDict()
   j = 0
 
   path = os.getcwd()
   strategy_path = path + '/results/' + strategy_name
-  df = pd.read_csv(strategy_path + '/single_results.csv')
-  single_results = df.to_dict(orient='index')
+  single_results_df = pd.read_csv(
+      strategy_path + '/single_results.csv', parse_dates=['entry_date'])
+  single_results = single_results_df.to_dict(orient='index')
 
-  dailypnls_path = strategy_path + '/daily_pnls/'
-  for strategy_code in list_strategies(dailypnls_path, underlying):
+  for strategy_code in single_results_df.strategy_code.unique():
     print(strategy_code)
 
     if (strategy_code not in exclude):
-
-      strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + '/'
 
       exits = {}
       total_positions = 0
@@ -66,7 +55,9 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
 
       # compute stats for strategy
       for key, value in single_results.items():
-        if (value['strategy_code'] == strategy_code):
+        entry_date = value['entry_date'].date()
+
+        if ((value['strategy_code'] == strategy_code) and (entry_date >= start_date)):
 
           total_positions += int(value['position_size'])
 
@@ -91,26 +82,27 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[]):
           else:
             exits[value['exit']] = 1
 
-      for key, value in exits.items():
-        if util.printalot:
-          print(str(key) + ' exit: \t' + str(value))
-
       # merge total_daily_pnls per strategy
       number_of_trades = 0
+
+      strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + '/'
       for filename in os.listdir(strategy_code_path):
         if filename.endswith('.csv'):
-          number_of_trades += 1
 
           daily_pnls = pd.read_csv(
               strategy_code_path + filename, parse_dates=['date'], index_col=['date'])
 
-          if (total_daily_pnls is None):
-            total_daily_pnls = daily_pnls
+          if (daily_pnls.index[0].date() >= start_date):
 
-          else:
-            total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0,
-                                         join='outer', ignore_index=False).groupby(['date'], as_index=True).sum()
-            total_daily_pnls.sort_index(inplace=True)
+            number_of_trades += 1
+
+            if (total_daily_pnls is None):
+              total_daily_pnls = daily_pnls
+
+            else:
+              total_daily_pnls = pd.concat([daily_pnls, total_daily_pnls], axis=0,
+                                           join='outer', ignore_index=False).groupby(['date'], as_index=True).sum()
+              total_daily_pnls.sort_index(inplace=True)
 
       if (total_daily_pnls is None):
         print('no trades')
