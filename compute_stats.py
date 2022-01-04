@@ -16,7 +16,7 @@ import trading_calendars as tc
 xnys = tc.get_calendar('XNYS')
 
 
-def compute_stats(start_date, strategy_name, underlying, risk_capital, exclude=[]):
+def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_date=datetime(2004, 1, 1).date()):
 
   # start computing stats
   equity_curve = collections.OrderedDict()
@@ -233,7 +233,7 @@ def compute_stats(start_date, strategy_name, underlying, risk_capital, exclude=[
 
           # Drawdown
           'Drawdown': '',
-          'max dd': '$' + str(format(int(max_dd))),
+          'max dd': '$' + str('{:,.0f}'.format(max_dd)),
           'max dd on risk': str(max_dd_risk_percentage) + '%',
           'max dd on prev peak': str(max_dd_percentage) + '%',
           'max dd date': running_max_dd_date.date(),
@@ -255,8 +255,9 @@ def compute_stats(start_date, strategy_name, underlying, risk_capital, exclude=[
   # Copy files for web
   shutil.copyfile(path + '/util/web/d3.js', strategy_path + '/d3.js')
   shutil.copyfile(path + '/util/web/index.html', strategy_path + '/index.html')
+
   try:
-    shutil.copyfile(path + '/util/web/' + str(strategy_name) +
+    shutil.copyfile(path + '/util/web/' + str(strategy_name)[0:-11] +
                     '.html', strategy_path + '/strategy.html')
   except Exception as e:
     print(e)

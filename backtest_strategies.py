@@ -26,15 +26,6 @@ def dict_product(d):
     yield dict(zip(keys, element))
 
 
-def make_dir(path):
-  try:
-    os.mkdir(path)
-  except OSError:
-    print('Creating dir %s failed' % path)
-  else:
-    print('Created dir %s ' % path)
-
-
 def get_next_entry(index_nr, frequency_string, single_entries, entry_date, end_date, underlying, dte):
 
   if frequency_string == 'c':
@@ -82,7 +73,7 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
 
     # make dir for permutation
     strategy_code_path = strategy_path + '/daily_pnls/' + strategy_code + "/"
-    make_dir(strategy_code_path)
+    util.make_dir(strategy_code_path)
 
     single_entries = None
     # get entries, measure time
@@ -163,61 +154,9 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
       else:
         running = False
 
-  if (include_underlying):
-    # create results file for underlying
-    underlying_daily_pnls_dict = {}
-    underlying_date = start
-    underlying_multiplier = None
-    underlying_at_entry = None
-    entry_vix = None
-    previouspnl = 0
-
-    while (underlying_date <= end):
-
-      while ((xnys.is_session(pd.Timestamp(underlying_date, tz=pytz.UTC)) is False)
-             or (util.connector.query_midprice_underlying(underlying, underlying_date) is None)):
-
-        underlying_date = underlying_date + timedelta(days=1)
-        if (underlying_date >= end) or (underlying_date >= datetime.now().date()):
-          break
-
-      underlying_midprice = util.connector.query_midprice_underlying(
-          underlying, underlying_date)
-      if underlying_midprice != 0:
-
-        if underlying_multiplier is None:
-          underlying_start_date = underlying_date
-          underlying_at_entry = underlying_midprice
-          underlying_multiplier = (risk_capital / underlying_midprice)
-          entry_vix = util.connector.query_midprice_underlying(
-              "^VIX", underlying_date)
-
-        current_pnl = (underlying_multiplier *
-                       underlying_midprice) - risk_capital
-        if current_pnl != None:
-          underlying_daily_pnls_dict[underlying_date] = format(
-              float(current_pnl - previouspnl), '.2f')
-          previouspnl = current_pnl
-
-      underlying_date = underlying_date + timedelta(days=1)
-
-    underlying_daily_pnls = pd.DataFrame.from_dict(
-        underlying_daily_pnls_dict, orient='index')
-    underlying_daily_pnls = underlying_daily_pnls.reindex(
-        underlying_daily_pnls.index.rename('date'))
-    underlying_daily_pnls.index = pd.to_datetime(underlying_daily_pnls.index)
-    underlying_daily_pnls.sort_index(inplace=True)
-    underlying_daily_pnls.columns = ['pnl']
-
-    underlying_strategy_code_path = strategy_path + \
-        '/daily_pnls/' + str(underlying.replace("^", "")) + "/"
-    make_dir(underlying_strategy_code_path)
-    underlying_file_name = underlying_strategy_code_path + 'underlying.csv'
-    underlying_daily_pnls.to_csv(underlying_file_name)
-
-    # save underlying to trade_log
-    trade_log[i+1] = dict({'trade nr.': trade_nr+1, 'strategy_code': str(underlying.replace("^", "")), 'entry_date': underlying_start_date, 'expiration': None, 'exit_date': underlying_date, 'entry_underlying': str(format(float(underlying_at_entry), '.2f')), 'entry_vix': entry_vix, 'strikes': None, 'iv_legs': None, 'entry_price': str(format(
-        float(risk_capital), '.2f')), 'dte': 0, 'dit': (end - start).days, 'pnl': str(format(float(current_pnl), '.2f')), 'dailypnls': None, 'max_risk': str(format(float(risk_capital), '.2f')), 'position_size': underlying_multiplier, 'percentage': str(format(float(round((float(current_pnl) / risk_capital) * 100, 2)), '.2f')) + '%', 'exit': None})
+  # we used to include the underlying here
+  # if (include_underlying):
+  #   util.add_underlying()
 
   # finished looping, save trade_log
   df_log = pd.DataFrame.from_dict(trade_log, orient='index')
@@ -248,14 +187,14 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start,
 
   # create directories
   path = os.getcwd()
-  make_dir(path + '/results')
+  util.make_dir(path + '/results')
   strategy_path = path + '/results/' + strategy_name
-  make_dir(strategy_path)
+  util.make_dir(strategy_path)
   try:
     shutil.rmtree(strategy_path + '/daily_pnls')
   except Exception as e:
     print(e)
-  make_dir(strategy_path + '/daily_pnls')
+  util.make_dir(strategy_path + '/daily_pnls')
 
   run_strategies(permutations, strategy_name, parameters, strategy_path, frequency_string,
                  underlying, start, end, strategy, risk_capital, quantity, include_underlying)

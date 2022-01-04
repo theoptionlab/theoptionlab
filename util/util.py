@@ -9,6 +9,7 @@ import math
 import pandas as pd
 import numpy as np
 import scipy.stats as st
+import os
 
 import trading_calendars as tc
 import pytz
@@ -794,3 +795,12 @@ def get_riskfree_libor(date, yte):
   rf = np.round(rf, decimals=4)
 
   return rf
+
+
+def make_dir(path):
+  try:
+    os.mkdir(path)
+  except OSError:
+    print('Creating dir %s failed' % path)
+  else:
+    print('Created dir %s ' % path)
