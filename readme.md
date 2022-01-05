@@ -15,7 +15,7 @@
 
 - Adapt `private/settings_template.py` with your own settings and rename the file into settings.py
 
-- Run `insert_fullday.py` and `free_money_scanner.py`
+- Run `insert_fullday.py` and `free_money_scanner.py` in the free_money_scanner directory
 
 - Insert all the data and precompute the greeks (takes a while), with or without the risk free rate (takes an even longer while)
 

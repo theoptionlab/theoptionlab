@@ -50,7 +50,7 @@ def get_next_entry(index_nr, frequency_string, single_entries, entry_date, end_d
   return None
 
 
-def run_strategies(permutations, strategy_name, parameters, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity, include_underlying=False):
+def run_strategies(permutations, strategy_name, parameters, strategy_path, frequency_string, underlying, start, end, strategy, risk_capital, quantity):
 
   trade_log = {}
   i = 0
@@ -154,16 +154,12 @@ def run_strategies(permutations, strategy_name, parameters, strategy_path, frequ
       else:
         running = False
 
-  # we used to include the underlying here
-  # if (include_underlying):
-  #   util.add_underlying()
-
   # finished looping, save trade_log
   df_log = pd.DataFrame.from_dict(trade_log, orient='index')
   df_log.to_csv(strategy_path + '/single_results.csv')
 
 
-def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start, end, parameters, frequency_string="m", include_underlying=False):
+def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start, end, parameters, frequency_string="m"):
 
   if util.printalot:
     print('strategy_name: ' + str(strategy_name))
@@ -197,4 +193,4 @@ def backtest(strategy, underlying, strategy_name, risk_capital, quantity, start,
   util.make_dir(strategy_path + '/daily_pnls')
 
   run_strategies(permutations, strategy_name, parameters, strategy_path, frequency_string,
-                 underlying, start, end, strategy, risk_capital, quantity, include_underlying)
+                 underlying, start, end, strategy, risk_capital, quantity)

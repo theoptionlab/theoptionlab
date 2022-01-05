@@ -191,6 +191,8 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_dat
       max_dd_percentage = format(max_dd_percentage, '.2f')
       average_percentage = format(average_percentage, '.2f')
 
+      total_dit = ('{:,.0f}'.format(total_dit))
+
       results_table[strategy_code] = {
 
           # Trade details
@@ -198,7 +200,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_dat
           'avg size': average_position_size,
           'avg risk': '$' + str('{:,.0f}'.format(average_risk)),
           'avg DIT': average_dit,
-          'total DITs': '{:,}'.format(total_dit),
+          'total DITs': total_dit,
 
           # P&L $
           'P&L $': '',
