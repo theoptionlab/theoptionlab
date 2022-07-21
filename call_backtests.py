@@ -15,7 +15,7 @@ results_path = os.getcwd() + '/results/'
 
 start = datetime(2006, 11, 1).date()
 new_start = datetime(2018, 1, 1).date()
-end = datetime(2021, 12, 31).date()
+end = datetime(2022, 6, 30).date()
 
 frequency_string = 'm'
 quantity = None
