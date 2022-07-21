@@ -198,7 +198,7 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_dat
           # Trade details
           'Trade details': '',
           'avg size': average_position_size,
-          'avg risk': '$' + str('{:,.0f}'.format(average_risk)),
+          'avg risk $': '$' + str('{:,.0f}'.format(average_risk)),
           'avg DIT': average_dit,
           'total DITs': total_dit,
 
@@ -216,28 +216,28 @@ def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_dat
 
           # RoR and RRR
           'RoR and RRR': '',
-          'avg RoR': str(average_percentage) + '%',
-          'ann RoR': str(annualized_RoR) + '%',
+          'avg RoR %': str(average_percentage) + '%',
+          'ann RoR %': str(annualized_RoR) + '%',
           'avg RoR/DIT': rod,
           'RRR': rrr,
 
           # Trades
           'Trades': '',
           'total trades': number_of_trades,
-          '# winners': winners,
-          'winners': str(percentage_winners) + '%',
-          'avg winner': '$' + str('{:,.0f}'.format(average_winner)),
-          'max winner': '$' + str('{:,.0f}'.format(maxwinner)),
-          '# losers': losers,
+          'winners': winners,
+          'winners %': str(percentage_winners) + '%',
+          'avg winner $': '$' + str('{:,.0f}'.format(average_winner)),
+          'max winner $': '$' + str('{:,.0f}'.format(maxwinner)),
+          'losers': losers,
           'losers %': str(percentage_losers) + '%',
-          'avg loser': '$' + str('{:,.0f}'.format(average_loser)),
-          'max loser': '$' + str('{:,.0f}'.format(maxloser)),
+          'avg loser $': '$' + str('{:,.0f}'.format(average_loser)),
+          'max loser $': '$' + str('{:,.0f}'.format(maxloser)),
 
           # Drawdown
           'Drawdown': '',
-          'max dd': '$' + str('{:,.0f}'.format(max_dd)),
-          'max dd on risk': str(max_dd_risk_percentage) + '%',
-          'max dd on prev peak': str(max_dd_percentage) + '%',
+          'max dd $': '$' + str('{:,.0f}'.format(max_dd)),
+          'max dd on risk %': str(max_dd_risk_percentage) + '%',
+          'max dd on prev peak %': str(max_dd_percentage) + '%',
           'max dd date': running_max_dd_date.date(),
           'max dd days': max_dd_duration,
 
