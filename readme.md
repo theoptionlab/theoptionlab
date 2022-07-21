@@ -1,4 +1,4 @@
-- Data (theoptionlab uses EOD data from the CBOE).
+* Data (theoptionlab uses EOD data from the CBOE).
 
 - Python (currently version 3, for version 2 see [previous release](https://github.com/theoptionlab/theoptionlab/releases/tag/v1.0)
 
