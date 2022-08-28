@@ -6,6 +6,7 @@
 `brew install postgresql`
 
 * Install dependencies: `pip3 install -r requirements.txt`
+`pip3 install psycopg2-binary --force-reinstall --no-cache-dir`
 
 * Clone the repository and change directory: 
 `git clone https://github.com/theoptionlab/theoptionlab.git && cd theoptionlab`
@@ -18,7 +19,7 @@
 
 * Adapt `private/settings_template.py` with your own settings and rename the file into settings.py
 
-* Run `insert_fullday.py` and `free_money_scanner.py` in the free_money_scanner directory
+* Run `insert_fullday.py` and `free_money_scanner.py`
 
 * Insert all the data and precompute the greeks (takes a while), with or without the risk free rate (takes an even longer while)
 
