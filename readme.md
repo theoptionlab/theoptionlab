@@ -6,7 +6,8 @@
 `brew install postgresql`
 
 * Install dependencies: `pip3 install -r requirements.txt`
-`pip3 install psycopg2-binary --force-reinstall --no-cache-dir`
+
+* Reinstall psycopg2-binary: `pip3 install psycopg2-binary --force-reinstall --no-cache-dir`
 
 * Clone the repository and change directory: 
 `git clone https://github.com/theoptionlab/theoptionlab.git && cd theoptionlab`
