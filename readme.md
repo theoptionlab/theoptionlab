@@ -2,6 +2,9 @@
 
 * Python (currently version 3, for version 2 see [previous release](https://github.com/theoptionlab/theoptionlab/releases/tag/v1.0)
 
+* Install postgres and configure user: 
+`brew install postgresql`
+
 * Install dependencies: `pip3 install -r requirements.txt`
 
 * Clone the repository and change directory: 
