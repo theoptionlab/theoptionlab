@@ -4,8 +4,8 @@ pysftp
 SQLAlchemy
 pandas
 workdays
-psycopg2_binary
 py_vollib
 psycopg2
+psycopg2-binary
 python_dateutil
-trading_calendars
+pandas_market_calendars

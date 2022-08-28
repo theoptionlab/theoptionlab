@@ -1,10 +1,12 @@
 from __future__ import division
 import psycopg2
-from util import util
 from datetime import datetime
+
+from util import util
 from private import settings
 
-date = "2010-08-03"
+
+date = "2022-08-16"
 print(date)
 print()
 
@@ -30,7 +32,7 @@ for row in cur1.fetchall():
       str(date), "%Y-%m-%d").date(), datetime.strptime(str(expiration), "%Y-%m-%d"))
   per_annum = round((percentage / remaining_time), 2)
 
-  if per_annum > 5:
+  if per_annum > 3.4:
     counter += 1
     print("counter: " + str(counter))
     print("underlying: " + str(underlying))

@@ -19,6 +19,7 @@ def insert(date):
   cur = db.cursor()
 
   print("DROP TABLE")
+
   cur.execute("DROP TABLE IF EXISTS fullday")
 
   print("CREATE TABLE")
@@ -69,5 +70,5 @@ def insert(date):
   db.close()
 
 
-date = datetime(2010, 8, 3).date()
+date = datetime(2022, 8, 16).date()
 insert(date)
