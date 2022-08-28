@@ -5,9 +5,9 @@ from util import util
 from datetime import datetime
 from datetime import timedelta
 import pandas as pd
-import trading_calendars as tc
+import pandas_market_calendars as pmc
 import pytz
-xnys = tc.get_calendar("XNYS")
+xnys = pmc.get_calendar("XNYS")
 
 cwd = os.getcwd()
 

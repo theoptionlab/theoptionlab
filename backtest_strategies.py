@@ -15,9 +15,9 @@ import run_strategy
 from util import util
 from util import entries
 
-import trading_calendars as tc
+import pandas_market_calendars as pmc
 import pytz
-xnys = tc.get_calendar("XNYS")
+xnys = pmc.get_calendar("XNYS")
 
 
 def dict_product(d):

@@ -11,9 +11,9 @@ import numpy as np
 import scipy.stats as st
 import os
 
-import trading_calendars as tc
+import pandas_market_calendars as pmc
 import pytz
-xnys = tc.get_calendar("XNYS")
+xnys = pmc.get_calendar("XNYS")
 
 
 def dateparse(x): return datetime.strptime(x, '%d.%m.%Y')
@@ -322,7 +322,7 @@ def remaining_time(reference, expiration):
 
   fraction = expiration_fraction - ref_fraction
 
-  sessions_in_range = xnys.sessions_in_range(
+  sessions_in_range = xnys.schedule(
       pd.Timestamp(ref.date(), tz=pytz.UTC),
       pd.Timestamp(expiration.date(), tz=pytz.UTC))
 

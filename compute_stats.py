@@ -12,8 +12,8 @@ import pandas as pd
 from util import util
 from util import performance
 
-import trading_calendars as tc
-xnys = tc.get_calendar('XNYS')
+import pandas_market_calendars as pmc
+xnys = pmc.get_calendar('XNYS')
 
 
 def compute_stats(strategy_name, underlying, risk_capital, exclude=[], start_date=datetime(2004, 1, 1).date()):

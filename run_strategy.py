@@ -2,12 +2,12 @@
 from __future__ import division
 from datetime import timedelta, datetime
 import pandas as pd
-import trading_calendars as tc
+import pandas_market_calendars as pmc
 import pytz
 
 from util import util
 
-xnys = tc.get_calendar("XNYS")
+xnys = pmc.get_calendar("XNYS")
 
 
 def checkMinIV(combo, miniv):
@@ -76,7 +76,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
       current_date = current_date + timedelta(days=1)
       continue
 
-    if ((strategy.min_iv_entry is not None) and not(checkMinIV(combo, strategy.min_iv_entry))):
+    if ((strategy.min_iv_entry is not None) and not (checkMinIV(combo, strategy.min_iv_entry))):
       combo = None
       current_date = current_date + timedelta(days=1)
       continue
