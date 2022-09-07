@@ -23,8 +23,8 @@ def add_underlying(start, end, underlying, risk_capital, strategy_name):
 
   while (underlying_date <= end):
 
-    while ((xnys.is_session(pd.Timestamp(underlying_date, tz=pytz.UTC)) is False)
-            or (util.connector.query_midprice_underlying(underlying, underlying_date) is None)):
+    while ((pd.Timestamp(underlying_date, tz='America/New_York') not in util.valid_days)
+           or (util.connector.query_midprice_underlying(underlying, underlying_date) is None)):
 
       underlying_date = underlying_date + timedelta(days=1)
       if (underlying_date >= end) or (underlying_date >= datetime.now().date()):

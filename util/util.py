@@ -4,7 +4,7 @@ from py_vollib import black_scholes
 from private import settings
 from util import postgresql_connector
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, date
 import math
 import pandas as pd
 import numpy as np
@@ -41,6 +41,9 @@ min_value = 1
 max_value = 100000
 
 printalot = True
+
+valid_days = xnys.valid_days(
+    start_date='2004-01-1', end_date=date.today(), tz='America/New_York')
 
 startdates = {
     "^RUT": datetime(2004, 1, 2).date(),
@@ -664,7 +667,8 @@ def getDownDay(underlying, date, strategy=None):
   down_day = False
 
   previous_date = date - timedelta(days=1)
-  while ((xnys.is_session(pd.Timestamp(previous_date, tz=pytz.UTC)) == False) or (connector.query_midprice_underlying(underlying, previous_date) is None) or (connector.query_midprice_underlying(underlying, previous_date) == 0)):
+  while ((pd.Timestamp(previous_date, tz='America/New_York') not in valid_days)
+         or (connector.query_midprice_underlying(underlying, previous_date) is None) or (connector.query_midprice_underlying(underlying, previous_date) == 0)):
     previous_date = previous_date - timedelta(days=1)
 
   underlying_midprice_current = connector.query_midprice_underlying(

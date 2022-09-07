@@ -15,7 +15,7 @@ results_path = os.getcwd() + '/results/'
 
 start = datetime(2006, 11, 1).date()
 new_start = datetime(2018, 1, 1).date()
-end = datetime(2022, 6, 30).date()
+end = datetime(2022, 8, 31).date()
 
 frequency_string = 'm'
 quantity = None
@@ -115,7 +115,7 @@ def derive_shorter_stats(strategy):
       new_name, underlying, risk_capital, [], new_start)
 
 
-for strategy in ('the-bull', 'netzero', 'bf70'):
+for strategy in ('bf70', 'the-bull', 'netzero'):
   run_and_compute(strategy)
   derive_shorter_stats(strategy)
 

@@ -77,7 +77,7 @@ class MyDB(object):
         "' AND strike = '" + str(strike) + "'"
     self.query(query)
     row = self._db_cur.fetchone()
-    if row is None:
+    if row is None or row[0] is None:
       return None
     return float(row[0])
 

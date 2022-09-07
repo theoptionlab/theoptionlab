@@ -40,7 +40,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
 
     combo = None
 
-    while ((xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) is False)
+    while ((pd.Timestamp(current_date, tz='America/New_York') not in util.valid_days)
            or (util.connector.query_midprice_underlying(underlying, current_date) is None)):
       current_date = current_date + timedelta(days=1)
       if (current_date >= expiration) or (current_date >= datetime.now().date()):
@@ -131,7 +131,11 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
     if position is not None:
       iv = util.connector.select_iv(position.option.entry_date, position.option.underlying,
                                     position.option.expiration, position.option.type, position.option.strike)
-      iv_legs = iv_legs + format(float(iv), '.2f')
+      if iv != None:
+        iv_legs = iv_legs + format(float(iv), '.2f')
+      else:
+        iv_legs = iv_legs + "x"
+
     else:
       iv_legs = iv_legs + "x"
 
@@ -143,7 +147,7 @@ def fly(strategy, underlying, risk_capital, quantity, entrydate, expiration):
     if (current_date >= expiration) or (current_date >= datetime.now().date()):
       flying = False
 
-    if (xnys.is_session(pd.Timestamp(current_date, tz=pytz.UTC)) == False):
+    if (pd.Timestamp(current_date, tz='America/New_York') not in util.valid_days):
       continue
 
     elif (util.connector.query_midprice_underlying(underlying, current_date) is None):
